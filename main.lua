@@ -26,10 +26,6 @@ logFile:setLevel("INFO")
 
 --Functions and methods
 
-function callEvent(...)
-	bot.callEvent(table.unpack({...}))
-end
-
 function sleep(time)
 	local t = os.clock()
 	while os.clock()-t < time do end 

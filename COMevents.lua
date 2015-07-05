@@ -2,11 +2,11 @@
 
 TAttachmentStatus = {
 	[-1] = "Unknown",
-	[0] = "Client is successfully attached",
-	[1] = "Waiting for user authorization",
-	[2] = "User has explicitly denied access to the client",
-	[3] = "Skype API is not available",
-	[4] = "Skype API is available"	
+	[0] = "Success",
+	[1] = "Waiting",
+	[2] = "Denied",
+	[3] = "APINotAvailable",
+	[4] = "APIAvailable"	
 }
 
 TConnectionStatus = {
@@ -30,8 +30,8 @@ TUserStatus = {
 	[0] = "Offline",
 	[1] = "Online",
 	[2] = "Away",
-	[3] = "Not Available",
-	[4] = "Do not Disturb",
+	[3] = "NotAvailable",
+	[4] = "DoNotDisturb",
 	[5] = "Invisible",
 	[6] = "Logged out",
 	[7] = "SkypeMe"
@@ -42,14 +42,10 @@ TOnlineStatus = {
 	[0] = "Offline",
 	[1] = "Online",
 	[2] = "Away",
-	[3] = "Not Available",
-	[4] = "Do not Disturb",
+	[3] = "NotAvailable",
+	[4] = "DoNotDisturb",
 	[5] = "SkypeOut",
 	[6] = "SkypeMe"
-}
-
-TCallStatus = {
-	--TODO: :(
 }
 
 skypeEvents = {}
@@ -104,7 +100,7 @@ end
 
 function skypeEvents:MessageStatus(message, status)
 	print("debug", "Event: MessageStatus status="..TChatMessageStatus[status].."("..status..") ".."message.Body="..message.Body)
-	callEvent("message"..TChatMessageStatus[status], message)
+	bot.callEvent("message"..TChatMessageStatus[status], message)
 end
 
 

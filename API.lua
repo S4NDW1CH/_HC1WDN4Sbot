@@ -52,6 +52,7 @@ end
 function bot.callEvent(e, ...)
 	local args = {...}
 	print("debug", "Parsing event "..e)
+	print("debug", "Modules to go through: "..#modules)
 	
 	if e == "messageReceived" then
 		if string.find(args[1].Body, "!reload") then
@@ -73,13 +74,14 @@ function bot.callEvent(e, ...)
 			args[1].Chat:SendMessage("Hey! My name is _HC1WDN4Sbot! I'm a Skype bot that does some useful and/or fun things.\n"..--[[
 								   ]]"  My creator: xx_killer_xx_l (he hates his Skype login)\n"..--[[
 								   ]]"  I'm on GitHub: https://github.com/S4NDW1CH/_HC1WDN4Sbot\n"..--[[
-								   ]]"  Current version: 0.0.2b")
+								   ]]"  Current version: 0.0.2b hotfix 1")
 		end
 	end
 
 	for _, mod in ipairs(modules) do
-		local err, msg = pcall(mod[e], args)
-		if err then print("debug", "Error while calling event handler "..e..": "..msg) end
+		if mod[e] then print("debug", "Current module has event handler for current event.") end
+		local succes, msg = pcall(mod[e], table.unpack(args))
+		if not succes then print("debug", "Error while calling event handler "..e..": "..msg) end
 	end
 end
 

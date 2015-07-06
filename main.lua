@@ -18,10 +18,12 @@ require "API"
 
 rawPrint = print
 
+logMode = "INFO"
+
 logConsole = logging.console("%date\t[%level] %message\n")
 logFile = logging.file("%s.log", "%Y-%m-%d-%H%M%S", "%date [%level] %message\n")
-logConsole:setLevel("INFO")
-logFile:setLevel("INFO")
+logConsole:setLevel(logMode)
+logFile:setLevel(logMode)
 
 
 --Functions and methods

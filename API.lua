@@ -19,8 +19,6 @@ function bot.loadModule(filename, message)
 
 	local succes, msg = pcall(module)
 
-	print(succes, msg)
-
 	if not succes then
 		if message then message.Chat:SendMessage("Error on initializing "..filename..":\n"..(msg or "")) end
 		return print("error", "Error on initializing "..filename..":\n"..(msg or ""))
@@ -51,8 +49,8 @@ end
 
 function bot.callEvent(e, ...)
 	local args = {...}
-	print("debug", "Parsing event "..e)
-	print("debug", "Modules to go through: "..#modules)
+	print("Parsing event "..e)
+	print("Modules to go through: "..#modules)
 	
 	if e == "messageReceived" then
 		if string.find(args[1].Body, "!reload") then
@@ -79,9 +77,9 @@ function bot.callEvent(e, ...)
 	end
 
 	for _, mod in ipairs(modules) do
-		if mod[e] then print("debug", "Current module has event handler for current event.") end
+		if mod[e] then print("Current module has event handler for current event.") end
 		local succes, msg = pcall(mod[e], table.unpack(args))
-		if not succes then print("debug", "Error while calling event handler "..e..": "..msg) end
+		if not succes then print("Error while calling event handler "..e..": "..msg) end
 	end
 end
 

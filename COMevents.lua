@@ -55,7 +55,7 @@ skypeEvents = {}
 setmetatable(skypeEvents, {__index = function(_, key) print("Unhandled event: "..key) end})
 
 function skypeEvents:Reply(command)
-	print("debug", "Got a reply to "..(command.Blocking and "" or "non-").."blocking command "..command.Command.."["..command.Id.."] :"..command.Reply.." (expected "..command.Expected..")")
+	print("Got a reply to "..(command.Blocking and "" or "non-").."blocking command "..command.Command.."["..command.Id.."] :"..command.Reply.." (expected "..command.Expected..")")
 end
 
 function skypeEvents:Command(command)
@@ -99,7 +99,7 @@ function skypeEvents:Mute(mute)
 end
 
 function skypeEvents:MessageStatus(message, status)
-	print("debug", "Event: MessageStatus status="..TChatMessageStatus[status].."("..status..") ".."message.Body="..message.Body)
+	print("Event: MessageStatus status="..TChatMessageStatus[status].."("..status..") ".."message.Body="..message.Body)
 	bot.callEvent("message"..TChatMessageStatus[status], message)
 end
 

@@ -9,6 +9,17 @@ ballResponses = {"No.", "Yes.", "Maybe.", "Not now.", "Ask your mother.", "Ask y
  				 "I would give an answer, but I'm too tired right now.", "Nah", "Meh", "Yeah", "Nope", "Uhh..",
  				 "Go play some TF2 instead.", "Go play some CS:GO instead.", "Go play some games instead."}
 
+function onLoad()
+	bot.registerCommand{name = "test", func = test}
+end
+
+function test(...)
+	local args = {...}
+
+	print("Test successful!")
+	args[1].Chat:SendMessage("Test successful!")
+end
+
 function dice(amount, sides)
 	print("info", "Rolling some die...")
 

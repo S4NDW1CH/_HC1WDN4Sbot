@@ -15,12 +15,13 @@ require "API"
 
 
 --Global definitions variables and constants
-config = {}
-
 rawPrint = print
 
 logConsole = logging.console("%date\t[%level] %message\n")
 logFile = logging.file("%s.log", "%Y-%m-%d-%H%M%S", "%date [%level] %message\n")
+
+config = bot.parseConfig("config.cfg")
+if not config then createConfig(); config = bot.parseConfig("config.cfg") end
 
 
 --Functions and methods
@@ -65,40 +66,9 @@ debug_trace = false
 	file:close()
 end
 
-function loadConfig()
-	print("info", "Loading config...")
-	local file = io.open("config.cfg", "r")
-	if not file then
-		print("info", "No config detected. Creating new config...")
-		createConfig()
-		return loadConfig()
-	end
-
-	for line in file:lines() do
-		if (not string.match(line, "#.")) and #line > 0 then
-			local var, val = string.match(line, "[%s\t]*(%w+)[%s\t]*=[%s\t]*([^\n]+)")
-
-			if not (not var) or (not val) or (#var < 1) or (#val < 1) then
-				val = (tonumber(val) and tonumber(val) or val)
-				val = (val == "true" or val)
-				if val == "false" then val = false end 
-				config[var] = val
-			end
-		end
-	end
-	file:close()
-
-	print("info", "Config has been loaded.")
-end
-
 
 --Main chunk
 function main()
-	logConsole:setLevel("DEBUG")
-	logFile:setLevel("DEBUG")
-
-	loadConfig()
-
 	logConsole:setLevel(config.debug and "DEBUG" or "INFO")
 	logFile:setLevel(config.debug and "DEBUG" or "INFO")
 
@@ -113,7 +83,7 @@ function main()
 	print("info", "Current user: "..skype.CurrentUser.FullName.." ("..skype.CurrentUser.Handle..").")
 	
 	print("info", "Event loop is running.")
-	luacom.StartMessageLoop(function() end)
+	luacom.StartMessageLoop(function() print("hey") end)
 end
 
 main()

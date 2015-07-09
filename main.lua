@@ -21,30 +21,10 @@ logConsole = logging.console("%date\t[%level] %message\n")
 logFile = logging.file("%s.log", "%Y-%m-%d-%H%M%S", "%date [%level] %message\n")
 
 config = bot.parseConfig("config.cfg")
-if not config then createConfig(); config = bot.parseConfig("config.cfg") end
+if not config then
+	 local file = io.open("config.cfg", "w")
 
-
---Functions and methods
-
-function sleep(time)
-	local t = os.clock()
-	while os.clock()-t < time do end 
-end
-
-function print(level, ...)
-	if level == "info" or level == "warn" or level == "error" or level == "fatal" then
-		logConsole:log(string.upper(level), table.unpack({...}))
-		logFile:log(string.upper(level), table.unpack({...}))
-	else
-		logConsole:debug(tostring(level)..table.concat({...}, "\t")..(config.debug_trace and "\n"..debug.traceback() or ""))
-		logFile:debug(tostring(level)..table.concat({...}, "\t")..(config.debug_trace and "\n"..debug.traceback() or ""))
-	end
-end
-
-function createConfig()
-	local file = io.open("config.cfg", "w")
-
-	local content = 
+	 local content = 
 [[#This is configuration file for _HC1WDN4Sbot.
 #In this file are definitions of some variables used internally.
 #The format of this file is simple:
@@ -64,6 +44,26 @@ debug_trace = false
 
 	file:write(content)
 	file:close()
+
+	config = bot.parseConfig("config.cfg")
+end
+
+
+--Functions and methods
+
+function sleep(time)
+	local t = os.clock()
+	while os.clock()-t < time do end 
+end
+
+function print(level, ...)
+	if level == "info" or level == "warn" or level == "error" or level == "fatal" then
+		logConsole:log(string.upper(level), table.unpack({...}))
+		logFile:log(string.upper(level), table.unpack({...}))
+	else
+		logConsole:debug(tostring(level)..table.concat({...}, "\t")..(config.debug_trace and "\n"..debug.traceback() or ""))
+		logFile:debug(tostring(level)..table.concat({...}, "\t")..(config.debug_trace and "\n"..debug.traceback() or ""))
+	end
 end
 
 

@@ -67,7 +67,7 @@ function bot.parseConfig(filename)
 
 	local tConfig = {}
 	local file = io.open("config.cfg", "r")
-	if not file then print("warn", filename.." not found"); file:close() return nil end
+	if not file then print("warn", filename.." not found") return nil end
 
 	for line in file:lines() do
 		if (not string.match(line, "#.")) and #line > 0 then

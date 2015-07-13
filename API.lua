@@ -17,11 +17,16 @@ function bot.loadModule(filename, message)
 	print("info", "Loading "..filename)
 	if message then message.Chat:SendMessage("Loading "..filename) end
 
-	local module = loadfile(filename)
+	local module, err = loadfile(filename)
+	if not module then
+		if message then message.Chat:SendMessage("Error loading module "..filename..":\n"..err) end
+		return print("error", "Error loading module "..filename..":\n"..err)
+	end
 
 	local env = {}
 
 	env._G = env
+	env._ENV = env
 	env._VERSION = _VERSION
 	env.assert = assert
 	env.dofile = dofile
@@ -97,7 +102,7 @@ function bot.loadModules(message)
 	--Next, iterate through all .lua files in \modules directory and load each file
 	lfs.mkdir("modules")
 	for filename in lfs.dir(".\\modules\\") do
-		if string.find(filename, "[%w%s]%.lua") then
+		if string.match(filename, "[_%-%w%s]*%.lua$") then
 			bot.loadModule(".\\modules\\"..filename, message)
 		end
 	end
@@ -180,7 +185,7 @@ function bot.callEvent(e, ...)
 	print("Modules to go through: "..#modules)
 	
 	if e == "messageReceived" then
-		for _, command, commandArgs in string.gmatch(args[1].Body, "(!)([_%w]+)[\n%z%s]*([^%.]*)") do
+		for _, command, commandArgs in string.gmatch(args[1].Body, "(!)([_%w]+)[\n%z%s]*([^%.\n%z]*)") do
 
 			if #_ == 1 then
 				if commandRegestry[command] then

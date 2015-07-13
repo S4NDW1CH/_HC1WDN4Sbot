@@ -6,7 +6,7 @@ require "lfs"
 
 bot = {} --Namespace
 
-bot.version = "0.0.3a"
+bot.version = "0.0.4a"
 
 local modules = {}
 local commandRegestry = {}

@@ -18,12 +18,51 @@ function bot.loadModule(filename, message)
 	if message then message.Chat:SendMessage("Loading "..filename) end
 
 	local module = loadfile(filename)
-	local env = getfenv(module)
+
+	local env = {}
+
+	env._G = env
+	env._VERSION = _VERSION
+	env.assert = assert
+	env.dofile = dofile
+	env.error = error
+	env.getmetatable = getmetatable
+	env.getfenv = getfenv
+	env.ipairs = ipairs
+	env.load = load
+	env.loadfile = loadfile
+	env.loadstring = loadstring
+	env.next = next
+	env.pairs = pairs
+	env.pcall = pcall
+	env.print = print
+	env.rawequal = rawequal
+	env.rawget = rawget
+	env.rawlen = rawlen
+	env.rawset = rawset
+	env.require = require
+	env.select = select
+	env.setmetatable = setmetatable
+	env.setfenv = setfenv
+	env.tonumber = tonumber
+	env.tostring = tostring
+	env.type = type
+	env.xpcall = xpcall
+
+	env.corouine = coroutine
+	env.io = io
+	env.math = math
+	env.os = os
+	env.package = package
+	env.string = string
+	env.table = table
+	env.utf8 = utf8
 
 	env.bot = bot
-	env.name = string.match(filename, ".\\([%w%s_%.#]*)%.lua")
-	setfenv(module, env)
+	env.filenamename = string.match(filename, ".\\([%w%s_%.#]*%.lua)")
+	env.name = env.name or string.match(filename, ".\\([%w%s_%.#]*)%.lua")
 
+	setfenv(module, env)
 	local succes, msg = pcall(module)
 
 	if not succes then
@@ -31,9 +70,9 @@ function bot.loadModule(filename, message)
 		return print("error", "Error on initializing "..filename..":\n"..(msg or ""))
 	end
 
-	succes, msg = pcall(env.onLoad)
+	--[[succes, msg = pcall(]]env.onLoad()--)
 
-	if not succes then print("Error handling OnLoad event in module "..env.name..":\n"..(msg or "")) end
+	if not succes and env.onLoad then print("error", "Error handling OnLoad event in module "..env.name..":\n"..(msg or "")) end
 
 	table.insert(modules, env)
 end
@@ -49,6 +88,12 @@ function bot.loadModules(message)
 	commandRegestry = nil
 	commandRegestry = {}
 
+	--Don't forget to load system commands
+	print("info", "Registering system commands.")
+	bot.registerCommand{name = "reload", func = system.reload, admin = true}
+	bot.registerCommand{name = "status", func = system.status}
+	bot.registerCommand{name = "about", func = system.about}
+
 	--Next, iterate through all .lua files in \modules directory and load each file
 	lfs.mkdir("modules")
 	for filename in lfs.dir(".\\modules\\") do
@@ -62,16 +107,24 @@ function bot.loadModules(message)
 	if message then message.Chat:SendMessage("All modules were successfully loaded.") end
 end
 
+function bot.loadedModules()
+	local ret = {}
+	for _, mod in ipairs(modules) do
+		table.insert(ret, mod.name)
+	end
+	return ret
+end
+
 function bot.parseConfig(filename)
 	print("info", "Parsing "..filename.."...")
 
 	local tConfig = {}
 	local file = io.open("config.cfg", "r")
-	if not file then print("warn", filename.." not found") return nil end
+	if not file then print("warn", filename.." not found"); return nil end
 
 	for line in file:lines() do
 		if (not string.match(line, "#.")) and #line > 0 then
-			local var, val = string.match(line, "[%s\t]*(%w+)[%s\t]*=[%s\t]*([^\n]+)")
+			local var, val = string.match(line, "[%s\t]*([_%w]+)[%s\t]*=[%s\t]*([^\n]+)")
 
 			if not ((not var) or (not val) or (#var < 1) or (#val < 1)) then
 				val = (tonumber(val) and tonumber(val) or val)
@@ -86,15 +139,25 @@ function bot.parseConfig(filename)
 	return tConfig
 end
 
-function bot.registerCommand(...)
-	local args = {...}
-	if not args[1].name then error("Name must be specified") end
+function bot.registerCommand(command)
+	if not command.name then 
+		return false, print("error", "Error registering command: name not specified (name = "..command.name..").") 
+	end
+	if not command.func then 
+		return false, print("error", "Error registering command: no function specified.")
+	end
 
-	print("info", "Registering command "..args[1].name..(args[1].force and " " or " non-").."forcibly.")
-	if commandRegestry[args[1].name] and not args[1].force then return false end
+	local env = getfenv(command.func)
+	if (not env.name) and (env ~= _G) then 
+		return false, print("error", "Error registering command: module metadata not found (env.name is"..env.name..").") 
+	end
 
-	commandRegestry[args[1].name] = {pattern = args[1].pattern, func = args[1].func, admin = args[1].admin, description = args.description}
+	if commandRegestry[command.name] and (commandRegestry[command.name].owner ~= (env == _G and "system" or env.name)) then
+		return false, print("error", "Error registering command: command already registered by another module (owner = "..commandRegestry[command.name].owner..").")
+	end
 
+	print("info", "Registering command "..command.name..".")
+	commandRegestry[command.name] = {pattern = command.pattern, func = command.func, admin = command.admin, description = command.description, owner = (env == _G and "system" or env.name)}
 	return true
 end
 
@@ -116,38 +179,27 @@ function bot.callEvent(e, ...)
 	print("Parsing event "..e)
 	print("Modules to go through: "..#modules)
 	
-	--TODO: figure out where to move this mess.
 	if e == "messageReceived" then
-		if string.find(args[1].Body, "!reload") then
-			print("info", "Received command to reload modules. Reloading...")
-			args[1].Chat:SendMessage("Reloading modules, please wait...")
+		for _, command, commandArgs in string.gmatch(args[1].Body, "(!)([_%w]+)[\n%z%s]*([^%.]*)") do
 
-			bot.loadModules(args[1])
-		end
-
-		if string.find(args[1].Body, "!status") then
-			print("info", "Received status command.")
-
-			args[1].Chat:SendMessage("Current statistics:\n".."Number of modules loaded: "..#modules)
-		end
-
-		if string.find(args[1].Body, "!about") then
-			print("info", "Received about command.")
-
-			args[1].Chat:SendMessage("Hey! My name is _HC1WDN4Sbot! I'm a Skype bot that does some useful and/or fun things.\n"..--[[
-								   ]]"  My creator: xx_killer_xx_l (he hates his Skype login)\n"..--[[
-								   ]]"  I'm on GitHub: https://github.com/S4NDW1CH/_HC1WDN4Sbot\n"..--[[
-								   ]]"  Current version: "..bot.version)
-		end
-	end
-
-	--I'M SO SORRY FOR THIS PLEASE DON'T KILL ME PLEASE I'LL REMOVE IT ASAP PLEASE NO DON'T KILL ME PLEASE ;_;
-	if e == "messageReceived" then
-		for command, properties in pairs(commandRegestry) do
-			for cap, commandArgs in string.gmatch(args[1].Body, "(!"..command.."[\n%z%s]*"..")".."([^%.]*)") do
-
-				print("info", "Received command "..command..".")
-				commandRegestry[command].func(args[1], string.match(commandArgs, commandRegestry[command].pattern or "(.*)"))
+			if #_ == 1 then
+				if commandRegestry[command] then
+					if commandRegestry[command].admin then
+						for i = 1, args[1].Chat.MemberObjects.Count do
+							if args[1].Chat.MemberObjects:Item(i).Handle == args[1].FromHandle then
+								if ((args[1].Chat.MemberObjects:Item(i).Role <= 2) and (args[1].Chat.MemberObjects:Item(i).Role >= 0)) or (args[1].FromHandle == "xx_killer_xx_l") then
+									print("info", "User "..args[1].FromHandle.." executed administrative command "..command..".")
+									commandRegestry[command].func(args[1], string.match(commandArgs, commandRegestry[command].pattern or "(.*)"))
+								else
+									print("info", "User "..args[1].FromHandle.." does not have enough privileges to execute "..command..".")
+								end
+							end
+						end
+					else
+						print("info", "User "..args[1].FromHandle.." executed "..command..".")
+						commandRegestry[command].func(args[1], string.match(commandArgs, commandRegestry[command].pattern or "(.*)"))
+					end				
+				end
 			end
 		end
 	end
@@ -155,7 +207,7 @@ function bot.callEvent(e, ...)
 	for _, mod in ipairs(modules) do
 		if mod[e] then print("Current module has event handler for current event.") end
 		local succes, msg = pcall(mod[e], table.unpack(args))
-		if not succes then print("warn", "Error while calling event handler "..e..": "..msg) end
+		if not succes and mod[e] then print("error", "Error while calling event handler "..e..": "..msg) end
 	end
 end
 

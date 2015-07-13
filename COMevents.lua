@@ -99,7 +99,7 @@ function skypeEvents:Mute(mute)
 end
 
 function skypeEvents:MessageStatus(message, status)
-	print("Event: MessageStatus status="..TChatMessageStatus[status].."("..status..") ".."message.Body="..message.Body)
+	print("Event: MessageStatus status="..TChatMessageStatus[status].."("..status..") message.Body="..message.Body)
 	bot.callEvent("message"..TChatMessageStatus[status], message)
 end
 

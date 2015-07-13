@@ -12,13 +12,11 @@ require "logging.file"
 
 require "COMevents"
 require "API"
+require "system"
 
 
 --Global definitions variables and constants
 rawPrint = print
-
-logConsole = logging.console("%date\t[%level] %message\n")
-logFile = logging.file("%s.log", "%Y-%m-%d-%H%M%S", "%date [%level] %message\n")
 
 config = bot.parseConfig("config.cfg")
 if not config then
@@ -35,11 +33,14 @@ if not config then
 #	values can contain anything
 #	spaces and tabs in the beginning of the line, before and after "=" are ignored.
 
-#If true, then debug output will be logged (default: false)
+#If true, then debug output will be logged. (default: false)
 debug = false
 
 #If true, when debug level message is printed, print stack traceback along with it. Effective only when debug = true. (default: false)
 debug_trace = false
+
+#If false, stops creating logs each session. (default: true)
+use_logs = true
 ]]
 
 	file:write(content)
@@ -47,6 +48,9 @@ debug_trace = false
 
 	config = bot.parseConfig("config.cfg")
 end
+
+logConsole = logging.console("%date\t[%level] %message\n")
+if config.use_logs then logFile = logging.file("%s.log", "%Y-%m-%d-%H%M%S", "%date [%level] %message\n") end
 
 
 --Functions and methods
@@ -59,10 +63,14 @@ end
 function print(level, ...)
 	if level == "info" or level == "warn" or level == "error" or level == "fatal" then
 		logConsole:log(string.upper(level), table.unpack({...}))
-		logFile:log(string.upper(level), table.unpack({...}))
+		if config.use_logs then logFile:log(string.upper(level), table.unpack({...})) end
 	else
-		logConsole:debug(tostring(level)..table.concat({...}, "\t")..(config.debug_trace and "\n"..debug.traceback() or ""))
-		logFile:debug(tostring(level)..table.concat({...}, "\t")..(config.debug_trace and "\n"..debug.traceback() or ""))
+		local res = ""
+		for _, v in ipairs({...}) do
+			res = res.."\t"..tostring(v)
+		end
+		logConsole:debug(tostring(level)..res..(config.debug_trace and "\n"..debug.traceback() or ""))
+		if config.use_logs then logFile:debug(tostring(level)..res..(config.debug_trace and "\n"..debug.traceback() or "")) end
 	end
 end
 
@@ -70,7 +78,7 @@ end
 --Main chunk
 function main()
 	logConsole:setLevel(config.debug and "DEBUG" or "INFO")
-	logFile:setLevel(config.debug and "DEBUG" or "INFO")
+	if config.use_logs then logFile:setLevel(config.debug and "DEBUG" or "INFO") end
 
 	bot.loadModules()
 
@@ -83,9 +91,9 @@ function main()
 	print("info", "Current user: "..skype.CurrentUser.FullName.." ("..skype.CurrentUser.Handle..").")
 	
 	print("info", "Event loop is running.")
-	luacom.StartMessageLoop(function() print("hey") end)
+	luacom.StartMessageLoop(function() end)
 end
-
 main()
+
 
 --EOF

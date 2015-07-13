@@ -13,13 +13,6 @@ function onLoad()
 	bot.registerCommand{name = "test", func = test}
 end
 
-function test(...)
-	local args = {...}
-
-	print("Test successful!")
-	args[1].Chat:SendMessage("Test successful!")
-end
-
 function dice(amount, sides)
 	print("info", "Rolling some die...")
 

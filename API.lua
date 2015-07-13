@@ -185,7 +185,7 @@ function bot.callEvent(e, ...)
 	print("Modules to go through: "..#modules)
 	
 	if e == "messageReceived" then
-		for _, command, commandArgs in string.gmatch(args[1].Body, "(!)([_%w]+)[\n%z%s]*([^%.\n%z]*)") do
+		for _, command, commandArgs in string.gmatch(args[1].Body, "(!)([^\n\t%z%s]+)[\t\n%z%s]*([^%.\n%z]*)") do
 
 			if #_ == 1 then
 				if commandRegestry[command] then

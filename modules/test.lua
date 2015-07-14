@@ -2,7 +2,7 @@ ballResponses = {"No.", "Yes.", "Maybe.", "Not now.", "Ask your mother.", "Ask y
  				 "Umm... Maybe?", "Yes for sure!", "No for sure!", "I can't answer that.",
  				 "Probably not.", "Probably yes.", "Ask GabeN. He knows that for sure.",
  				 "Not now, I'm busy.", "If I'd answer that, it wouldn't be fun.",
- 				 "Really? You are asking me about THIS?", "4", "42", "http://c.xkcd.com/random/comic/",
+ 				 "Really? You are asking me about THIS?", "4", "42",
  				 "I think there's something in the Guide about this.", "EW!", "Let me think about this for a moment.",
  				 "You sure you want an answer to that?", "Even I don't know answer to that.", "Don't worry about that.",
  				 "Don't think about that.", "You shouldn't worry about that.", "Not anymore.",
@@ -11,6 +11,10 @@ ballResponses = {"No.", "Yes.", "Maybe.", "Not now.", "Ask your mother.", "Ask y
 
 function onLoad()
 	bot.registerCommand{name = "test", func = test}
+end
+
+function test()
+	-- body
 end
 
 function dice(amount, sides)

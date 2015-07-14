@@ -68,16 +68,16 @@ function bot.loadModule(filename, message)
 	env.name = env.name or string.match(filename, ".\\([%w%s_%.#]*)%.lua")
 
 	setfenv(module, env)
-	local succes, msg = pcall(module)
+	local success, msg = pcall(module)
 
-	if not succes then
+	if not success then
 		if message then message.Chat:SendMessage("Error on initializing "..filename..":\n"..(msg or "")) end
 		return print("error", "Error on initializing "..filename..":\n"..(msg or ""))
 	end
 
-	--[[succes, msg = pcall(]]env.onLoad()--)
+	success, msg = pcall(env.onLoad)
 
-	if not succes and env.onLoad then print("error", "Error handling OnLoad event in module "..env.name..":\n"..(msg or "")) end
+	if not success and env.onLoad then print("error", "Error handling onLoad event in module "..env.name..":\n"..(msg or "no error message available")) end
 
 	table.insert(modules, env)
 end
@@ -98,6 +98,7 @@ function bot.loadModules(message)
 	bot.registerCommand{name = "reload", func = system.reload, admin = true}
 	bot.registerCommand{name = "status", func = system.status}
 	bot.registerCommand{name = "about", func = system.about}
+	bot.registerCommand{name = "help", func = system.help, pattern = "([^\n\t%z%s]*)", description = "this message", detailedDescription = "//HERE BE DRAGONS"}
 
 	--Next, iterate through all .lua files in \modules directory and load each file
 	lfs.mkdir("modules")
@@ -118,6 +119,22 @@ function bot.loadedModules()
 		table.insert(ret, mod.name)
 	end
 	return ret
+end
+
+function bot.availableCommands()
+	local res = {}
+	for command, _ in pairs(commandRegestry) do
+		table.insert(res, command)
+	end
+	return res
+end
+
+function bot.getDescription(command)
+	return commandRegestry[command].description
+end
+
+function bot.getDetailedDescription(command)
+	return commandRegestry[command].detailedDescription
 end
 
 function bot.parseConfig(filename)
@@ -162,7 +179,7 @@ function bot.registerCommand(command)
 	end
 
 	print("info", "Registering command "..command.name..".")
-	commandRegestry[command.name] = {pattern = command.pattern, func = command.func, admin = command.admin, description = command.description, owner = (env == _G and "system" or env.name)}
+	commandRegestry[command.name] = {pattern = command.pattern, func = command.func, admin = command.admin, description = command.description, detailedDescription = command.detailedDescription, owner = (env == _G and "system" or env.name)}
 	return true
 end
 
@@ -185,7 +202,7 @@ function bot.callEvent(e, ...)
 	print("Modules to go through: "..#modules)
 	
 	if e == "messageReceived" then
-		for _, command, commandArgs in string.gmatch(args[1].Body, "(!)([^\n\t%z%s]+)[\t\n%z%s]*([^%.\n%z]*)") do
+		for _, command, commandArgs in string.gmatch(args[1].Body, "(!)([^\n\t%z%s]+)[\t\n%z%s]*([^!\n%z]*)") do
 
 			if #_ == 1 then
 				if commandRegestry[command] then
@@ -194,7 +211,8 @@ function bot.callEvent(e, ...)
 							if args[1].Chat.MemberObjects:Item(i).Handle == args[1].FromHandle then
 								if ((args[1].Chat.MemberObjects:Item(i).Role <= 2) and (args[1].Chat.MemberObjects:Item(i).Role >= 0)) or (args[1].FromHandle == "xx_killer_xx_l") then
 									print("info", "User "..args[1].FromHandle.." executed administrative command "..command..".")
-									commandRegestry[command].func(args[1], string.match(commandArgs, commandRegestry[command].pattern or "(.*)"))
+									local success, msg = pcall(commandRegestry[command].func, args[1], string.match(commandArgs, commandRegestry[command].pattern or "(.*)"))
+									if not seccess then print("error", "Error while executing command "..command..":\n"..msg) end
 								else
 									print("info", "User "..args[1].FromHandle.." does not have enough privileges to execute "..command..".")
 								end
@@ -202,7 +220,8 @@ function bot.callEvent(e, ...)
 						end
 					else
 						print("info", "User "..args[1].FromHandle.." executed "..command..".")
-						commandRegestry[command].func(args[1], string.match(commandArgs, commandRegestry[command].pattern or "(.*)"))
+						local success, msg = pcall(commandRegestry[command].func, args[1], string.match(commandArgs, commandRegestry[command].pattern or "(.*)"))
+						if not seccess then print("error", "Error while executing command "..command..":\n"..msg) end
 					end				
 				end
 			end

@@ -6,6 +6,6 @@ function reply(message, command, r)
 	if bot.registerCommand{name = command, func = function(msg) msg.Chat:SendMessage(""..r) end} then
 		message.Chat:SendMessage("Command "..command.." successfully registered.")
 	else
-		message.Chat:SendMessage("Could not register "..command..".")
+		message.Chat:SendMessage("Could not register "..command..". Check logs for more information.")
 	end
 end

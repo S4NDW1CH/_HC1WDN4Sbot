@@ -1,5 +1,5 @@
 --Where to look up modules
-package.cpath = ".\\?.dll;.\\?51.dll;.\\lib\\?.dll;.\\lib\\?51.dll;"
+package.cpath = ".\\?.dll;.\\lib\\?.dll"
 package.path = ".\\?.lua;.\\lua\\?.lua"
 
 --Load modules

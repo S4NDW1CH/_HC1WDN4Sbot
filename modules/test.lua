@@ -10,11 +10,8 @@ ballResponses = {"No.", "Yes.", "Maybe.", "Not now.", "Ask your mother.", "Ask y
  				 "Go play some TF2 instead.", "Go play some CS:GO instead.", "Go play some games instead."}
 
 function onLoad()
-	bot.registerCommand{name = "test", func = test}
-end
-
-function test()
-	-- body
+	bot.registerCommand{name = "choice", func = choice, pattern = "(.+)"}
+	bot.registerCommand{name = "8ball", func = ball, pattern = "(.+)"}
 end
 
 function dice(amount, sides)
@@ -31,12 +28,23 @@ function dice(amount, sides)
 	return table.concat(result, " + ")
 end
 
-function choice(options)
+function choice(message, args)
+	local options = {} 
+	for option in args:gmatch(",?%s*([^%,%.\n\t%z]*),?") do
+		table.insert(options, option)
+	end
 	print("info", "Choosing something...")
 	math.randomseed(os.clock()/math.random())
 	math.random();math.random();math.random()
 
-	return options[math.random(#options)]
+	message.Chat:SendMessage("How about "..options[math.random(#options)]..", "..message.FromDisplayName.."?")
+end
+
+function ball(message)
+	math.randomseed(os.clock()/math.random())
+	math.random();math.random();math.random()
+
+	message.Chat:SendMessage(ballResponses[math.random(#ballResponses)])
 end
 
 function messageReceived(message)
@@ -45,20 +53,5 @@ function messageReceived(message)
 		message.Chat:SendMessage(message.FromDisplayName.." rolled "..dice((#amount > 0 and amount or 1), sides))
 	end
 
-	for str in message.Body:gmatch("!choice (.+)") do
-		local options = {} 
-		for option in str:gmatch(",?%s*([%w%s]*),?") do
-			table.insert(options, option)
-		end
-
-		message.Chat:SendMessage("How about "..choice(options)..", "..message.FromDisplayName.."?")
-	end
-
-	for _ in message.Body:gmatch("!8ball .+") do
-		print("info", "Answering the question...")
-		math.randomseed(os.clock()/math.random())
-		math.random();math.random();math.random()
-		message.Chat:SendMessage(ballResponses[math.random(#ballResponses)])
-	end
 	return true
 end

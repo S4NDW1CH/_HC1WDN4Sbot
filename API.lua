@@ -6,7 +6,7 @@ require "lfs"
 
 bot = {} --Namespace
 
-bot.version = "0.0.5a"
+bot.version = "0.6"
 
 local modules = {}
 local commandRegestry = {}
@@ -99,6 +99,8 @@ function bot.loadModules(message)
 	bot.registerCommand{name = "status", func = system.status}
 	bot.registerCommand{name = "about", func = system.about}
 	bot.registerCommand{name = "help", func = system.help, pattern = "([^\n\t%z%s]*)", description = "this message", detailedDescription = "//HERE BE DRAGONS"}
+	bot.registerCommand{name = "motd", func = system.motd}
+	bot.registerCommand{name = "setmotd", func = system.setMOTD, admin = true}
 
 	--Next, iterate through all .lua files in \modules directory and load each file
 	lfs.mkdir("modules")
@@ -149,7 +151,7 @@ function bot.parseConfig(filename)
 			local var, val = string.match(line, "[%s\t]*([_%w]+)[%s\t]*=[%s\t]*([^\n]+)")
 
 			if not ((not var) or (not val) or (#var < 1) or (#val < 1)) then
-				val = (tonumber(val) and tonumber(val) or val)
+				val = (tonumber(val) or val)
 				val = (val == "true" or val)
 				if val == "false" then val = false end 
 				tConfig[var] = val
@@ -202,7 +204,7 @@ function bot.callEvent(e, ...)
 	print("Modules to go through: "..#modules)
 	
 	if e == "messageReceived" then
-		for _, command, commandArgs in string.gmatch(args[1].Body, "(!)([^\n\t%z%s]+)[\t\n%z%s]*([^!\n%z]*)") do
+		for _, command, commandArgs in string.gmatch(args[1].Body, "(!)([^\n\t%z%s]+)[\t\n%z%s]*([^!%z]*)") do
 
 			if #_ == 1 then
 				if commandRegestry[command] then

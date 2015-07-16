@@ -1,3 +1,5 @@
+
+
 function onLoad()
 	bot.registerCommand{name = "reply", func = reply, pattern = "([^\t%s]+)[\t%s]*(.+)", admin = true}
 end

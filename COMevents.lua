@@ -9,14 +9,6 @@ TAttachmentStatus = {
 	[4] = "APIAvailable"	
 }
 
-TConnectionStatus = {
-	[-1] = "Unknown",
-	[0] = "Connection does not exist",
-	[1] = "Establishing connection",
-	[2] = "Connection is pausing",
-	[3] = "Made connection"
-}
-
 TChatMessageStatus = {
 	[-1] = "Unknown",
 	[0] = "Sending",
@@ -56,51 +48,40 @@ setmetatable(skypeEvents, {__index = function(_, key) print("Unhandled event: ".
 
 function skypeEvents:Reply(command)
 	print("Got a reply to "..(command.Blocking and "" or "non-").."blocking command "..command.Command.."["..command.Id.."] :"..command.Reply.." (expected "..command.Expected..")")
+	bot.callEvent("commandReply", command)
 end
 
 function skypeEvents:Command(command)
-	-- body
+	bot.callEvent("command", command)
 end
 
 function skypeEvents:Error(command, code, descr)
-	-- body
+	bot.callEvent("commandError", command, code, descr)
 end
 
 function skypeEvents:AttachmentStatus(status)
-	-- body
-end
-
-function skypeEvents:ConnectionStatus(status)
-	-- body
+	bot.callEvent("attachment"..TAttachmentStatus[status])
 end
 
 function skypeEvents:UserStatus(status)
-	-- body
-end
-
-function skypeEvents:UserStatus(status)
-	-- body
+	bot.callEvent("client"..TUserStatus[status])
 end
 
 function skypeEvents:OnlineStatus(user, status)
-	-- body
+	bot.callEvent("userStatus", user, status)
 end
 
 function skypeEvents:CallStatus(call, status)
-	-- body
-end
-
-function skypeEvents:CallHistory()
-	-- body
-end
-
-function skypeEvents:Mute(mute)
-	-- body
+	call:Finish()
 end
 
 function skypeEvents:MessageStatus(message, status)
 	print("Event: MessageStatus status="..TChatMessageStatus[status].."("..status..") message.Body="..message.Body)
 	bot.callEvent("message"..TChatMessageStatus[status], message)
+end
+
+function skypeEvents:UserMood(user, moodText)
+	bot.callEvent("moodChanged", user, moodText)
 end
 
 

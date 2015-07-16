@@ -11,6 +11,6 @@ function messageReceived(message)
 
 		local h, m, s = string.match(videoDetails.items[1].contentDetails.duration, "PT(%d*)H?(%d*)M?(%d*)S?")
 	local time = (#h>0 and h..":" or "")..(#m>0 and m..":" or "")..s 
-	message.Chat:SendMessage("["..time.."] "..videoDetails.items[1].snippet.localized.title.." by "..videoDetails.items[1].snippet.channelTitle.."\n"..videoDetails.items[1].snippet.description)
+	message.Chat:SendMessage("["..time.."] "..videoDetails.items[1].snippet.localized.title.." by "..videoDetails.items[1].snippet.channelTitle)
 	end
 end

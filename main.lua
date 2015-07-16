@@ -50,7 +50,7 @@ use_logs = true
 end
 
 logConsole = logging.console("%date\t[%level] %message\n")
-if config.use_logs then logFile = logging.file("%s.log", "%Y-%m-%d-%H%M%S", "%date [%level] %message\n") end
+if config.use_logs then logFile = logging.file("bot.log", "%Y-%m-%d-%H%M%S", "%date [%level] %message\n") end
 
 
 --Functions and methods

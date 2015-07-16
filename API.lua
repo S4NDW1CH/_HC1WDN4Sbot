@@ -6,7 +6,7 @@ require "lfs"
 
 bot = {} --Namespace
 
-bot.version = "0.6"
+bot.version = "0.6.1"
 
 local modules = {}
 local commandRegestry = {}
@@ -204,7 +204,7 @@ function bot.callEvent(e, ...)
 	print("Modules to go through: "..#modules)
 	
 	if e == "messageReceived" then
-		for _, command, commandArgs in string.gmatch(args[1].Body, "(!)([^\n\t%z%s]+)[\t\n%z%s]*([^!%z]*)") do
+		for _, command, commandArgs in string.gmatch(args[1].Body, "(!)([^\n\t%z%s!]+)[\t\n%z%s]*([^!%z]*)") do
 
 			if #_ == 1 then
 				if commandRegestry[command] then

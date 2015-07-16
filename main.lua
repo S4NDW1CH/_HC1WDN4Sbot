@@ -72,6 +72,8 @@ function print(level, ...)
 		logConsole:debug(tostring(level)..res..(config.debug_trace and "\n"..debug.traceback() or ""))
 		if config.use_logs then logFile:debug(tostring(level)..res..(config.debug_trace and "\n"..debug.traceback() or "")) end
 	end
+  
+  return true
 end
 
 

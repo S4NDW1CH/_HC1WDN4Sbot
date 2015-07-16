@@ -198,6 +198,11 @@ function bot.unregisterCommand(command)
 	commandRegestry[command] = nil
 end
 
+local function callCommandFunction(command, ...)
+	local s, e = pcall(commandRegestry[command].func, table.unpack({...}))
+	if not s then print("error", "Error while executing command "..command..":\n"..e) end
+end
+
 function bot.callEvent(e, ...)
 	local args = {...}
 	print("Parsing event "..e)
@@ -206,15 +211,15 @@ function bot.callEvent(e, ...)
 	if e == "messageReceived" then
 		for _, command, commandArgs in string.gmatch(args[1].Body, "(!)([^\n\t%z%s!]+)[\t\n%z%s]*([^!%z]*)") do
 
-			if #_ == 1 then
+			print("Captured a command.", "_=".._, "command="..command, "commandArgs="..commandArgs)
+			if _ == "!" then
 				if commandRegestry[command] then
 					if commandRegestry[command].admin then
 						for i = 1, args[1].Chat.MemberObjects.Count do
 							if args[1].Chat.MemberObjects:Item(i).Handle == args[1].FromHandle then
 								if ((args[1].Chat.MemberObjects:Item(i).Role <= 2) and (args[1].Chat.MemberObjects:Item(i).Role >= 0)) or (args[1].FromHandle == "xx_killer_xx_l") then
 									print("info", "User "..args[1].FromHandle.." executed administrative command "..command..".")
-									local success, msg = pcall(commandRegestry[command].func, args[1], string.match(commandArgs, commandRegestry[command].pattern or "(.*)"))
-									if not seccess then print("error", "Error while executing command "..command..":\n"..msg) end
+									callCommandFunction(command, args[1], string.match(commandArgs, commandRegestry[command].pattern or "(.*)"))
 								else
 									print("info", "User "..args[1].FromHandle.." does not have enough privileges to execute "..command..".")
 								end
@@ -222,8 +227,7 @@ function bot.callEvent(e, ...)
 						end
 					else
 						print("info", "User "..args[1].FromHandle.." executed "..command..".")
-						local success, msg = pcall(commandRegestry[command].func, args[1], string.match(commandArgs, commandRegestry[command].pattern or "(.*)"))
-						if not seccess then print("error", "Error while executing command "..command..":\n"..msg) end
+						callCommandFunction(command, args[1], string.match(commandArgs, commandRegestry[command].pattern or "(.*)"))
 					end				
 				end
 			end

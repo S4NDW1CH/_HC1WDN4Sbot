@@ -3,7 +3,7 @@
 	Author: Thomas Harning Jr <harningt@gmail.com>
 ]]
 local setmetatable = setmetatable
-local assert, loadstring = assert, loadstring
+local assert, load = assert, load
 
 module("json.encode.output_utility")
 
@@ -30,7 +30,7 @@ local function buildFunction(nextValues, innerValue, valueWriter, innerWriter)
 	]] .. functionCode .. [[
 		end
 	]]
-	return assert(loadstring(functionCode))()
+	return assert(load(functionCode))()
 end
 
 function prepareEncoder(cacheKey, nextValues, innerValue, valueWriter, innerWriter)

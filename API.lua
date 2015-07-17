@@ -206,7 +206,6 @@ end
 function bot.callEvent(e, ...)
 	local args = {...}
 	print("Parsing event "..e)
-	print("Modules to go through: "..#modules)
 	
 	if e == "messageReceived" then
 		for _, command, commandArgs in string.gmatch(args[1].Body, "(!)([^\n\t%z%s!]+)[\t\n%z%s]*([^!%z]*)") do
@@ -235,9 +234,9 @@ function bot.callEvent(e, ...)
 	end
 
 	for _, mod in ipairs(modules) do
-		if mod[e] then print("Current module has event handler for current event.") end
+		if mod[e] then print("Module "..mod.name.." has event handler for current event.") end
 		local succes, msg = pcall(mod[e], table.unpack(args))
-		if not succes and mod[e] then print("error", "Error while calling event handler "..e..": "..msg) end
+		if not succes and mod[e] then print("error", "Error while calling event handler "..e.." in module "..mod.name..": "..msg) end
 	end
 end
 

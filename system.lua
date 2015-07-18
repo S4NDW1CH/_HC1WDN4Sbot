@@ -7,6 +7,20 @@ local motd = {}
 
 --Functions and methods
 
+function system.debugGetChatVar(message, varName)
+	local chatEnv = bot.getChatEnvironment(message.Chat.Blob)
+	message.Chat:SendMessage(varName.." = "..(chatEnv[varName] or "nil"))
+end
+
+function system.debugSetChatVar(message, varName, val)
+	print(varName, val)
+	val = tonumber(val) or val
+	if val == "true" then val = true end
+	if val == "false" then val = false end
+	bot.getChatEnvironment(message.Chat.Blob)[varName] = val
+	message.Chat:SendMessage(varName.." = "..bot.getChatEnvironment(message.Chat.Blob)[varName] or "nil")
+end
+
 function system.motd(message)
 	message.Chat:SendMessage(motd[message.Chat.Blob] or "No MOTD available for this chat.\nTo set MOTD for this chat user with helper, master or creator status must run !setmotd in this chat.")
 end

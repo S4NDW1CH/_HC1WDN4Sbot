@@ -1,17 +1,8 @@
-json = require "json"
 replys = {}
 justRegistered = false
 
 function onLoad()
-	local file = io.open("chat_replys.json", "r")
-	if file then
-		local jsonString = file:read("*a")
-		for k, v in pairs(json.decode(#jsonString > 0 and jsonString or "[]")) do print(k, v) end
-		replys = json.decode(#jsonString > 0 and jsonString or "[]")
-		file:close()
-	end
-
-	bot.registerCommand{name = "reply", func = reply, pattern = "([^~]+)[\t%s]*~[\t%s]*(.+)", --[[admin = true]]}
+	bot.registerCommand{name = "reply", func = reply, pattern = "([^~]+)[\t%s]*~[\t%s]*(.+)", admin = true}
 end
 
 local function save()
@@ -34,10 +25,13 @@ end
 
 function reply(message, word, rep)
 	justRegistered = true
+	oWord = word
+	word = string.gsub(word, "([%(%)%.%^%$%%%-%+%*%?])", "%%%0")
+	word = string.gsub(word, "(%%%*)", "%.%*")
 	replys[message.Chat.Blob] = {}
 	replys[message.Chat.Blob][word] = rep
 	
-	message.Chat:SendMessage("Now replying to "..word.." with "..replys[message.Chat.Blob][word]..".")
+	message.Chat:SendMessage("Now replying to "..oWord.." with "..replys[message.Chat.Blob][word]..".")
 	save()
 end
 

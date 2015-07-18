@@ -1,15 +1,18 @@
 --Load modules
 require "lfs"
+json = require "json"
 
 
 --Global definitions variables and constants
 
 bot = {} --Namespace
 
-bot.version = "0.6.2"
+bot.version = "0.7"
 
 local modules = {}
 local commandRegestry = {}
+
+local chats = {}
 
 
 --Functions and methods
@@ -101,6 +104,8 @@ function bot.loadModules(message)
 	bot.registerCommand{name = "help", func = system.help, pattern = "([^\n\t%z%s]*)", description = "this message", detailedDescription = "//HERE BE DRAGONS"}
 	bot.registerCommand{name = "motd", func = system.motd}
 	bot.registerCommand{name = "setmotd", func = system.setMOTD, admin = true}
+	bot.registerCommand{name = "setChatVar", func = system.debugSetChatVar, admin = true, pattern = "([%d%w]+)%s*=%s*(.+)"}
+	bot.registerCommand{name = "getChatVar", func = system.debugGetChatVar, admin = true}
 
 	--Next, iterate through all .lua files in \modules directory and load each file
 	lfs.mkdir("modules")
@@ -163,6 +168,37 @@ function bot.parseConfig(filename)
 	return tConfig
 end
 
+function bot.getChatEnvironment(blob)
+	print("Getting chat environment.")
+	local file = io.open(".\\chats\\"..blob..".json", "r")
+	print(file)
+	if file and not chat[blob] then
+		local content = file.read("*a")
+		print(content)
+		rawset(chats, blob, json.decode(content or "{}")) --Is this considered as hack? If so then I'm sorry. :(
+	end
+
+	return chats[blob], print("Got chat environment.")
+end
+
+function bot.createChatEnvironment(blob)
+	print("Setting chat environment.")
+	if not chats[blob] then
+		chats[blob] = {}
+		setmetatable(chats[blob], {__newindex = function(table, key, value)
+			rawset(table, key, value)
+			lfs.mkdir("chats")
+			local file = io.open(".\\chats\\"..blob..".json", "w")
+			file:write(json.encode(chats[blob]))
+			file:close()
+		end})
+
+		return true, print("Chat environment created.")
+	end
+
+	return false, print("Chat environment already exists.")
+end
+
 function bot.registerCommand(command)
 	if not command.name then 
 		return false, print("error", "Error registering command: name not specified (name = "..command.name..").") 
@@ -208,6 +244,8 @@ function bot.callEvent(e, ...)
 	print("Parsing event "..e)
 	
 	if e == "messageReceived" then
+		if not chats[args[1].Chat.Blob] then chats[args[1].Chat.Blob] = {} end
+
 		for _, command, commandArgs in string.gmatch(args[1].Body, "(!)([^\n\t%z%s!]+)[\t\n%z%s]*([^!%z]*)") do
 
 			print("Captured a command.", "_=".._, "command="..command, "commandArgs="..commandArgs)

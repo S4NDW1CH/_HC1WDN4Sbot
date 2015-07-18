@@ -45,3 +45,4 @@ luac.out
 *.chm
 Skype4COM.dll
 Skype/
+*.json

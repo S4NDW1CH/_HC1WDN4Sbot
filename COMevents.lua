@@ -76,6 +76,11 @@ function skypeEvents:CallStatus(call, status)
 end
 
 function skypeEvents:MessageStatus(message, status)
+	if not bot.getChatEnvironment(message.Chat.Blob) then
+		print(pcall(bot.createChatEnvironment, message.Chat.Blob))
+		local chat = bot.getChatEnvironment(message.Chat.Blob)
+		chat.chat = message.Chat
+	end
 	print("Event: MessageStatus status="..TChatMessageStatus[status].."("..status..") message.Body="..message.Body)
 	bot.callEvent("message"..TChatMessageStatus[status], message)
 end

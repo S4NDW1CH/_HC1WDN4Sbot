@@ -2,12 +2,12 @@
 
 system = {}
 
-local motd = {}
+--local motd = {}
 
 
 --Functions and methods
 
-function system.debugGetChatVar(message, varName)
+--[[function system.debugGetChatVar(message, varName)
 	local chatEnv = bot.getChatEnvironment(message.Chat.Blob)
 	message.Chat:SendMessage(varName.." = "..(chatEnv[varName] or "nil"))
 end
@@ -28,13 +28,32 @@ end
 function system.setMOTD(message, text)
 	motd[message.Chat.Blob] = text
 	message.Chat:SendMessage("MOTD has been set to "..(motd[message.Chat.Blob] or "... Actually it hasn't been set to anything. I suspect something went wrong. You should check logs to confirm that."))
-end
+end]]
 
 function system.reload(message)
 	print("info", "Received command to reload modules. Reloading...")
 	message.Chat:SendMessage("Reloading modules, please wait...")
 
 	bot.loadModules(message)
+end
+
+function system.loadedModules(message)
+	local t = bot.loadedModules()
+	local s = "Current modules:"
+
+	for mName, enabled in pairs(t) do
+		s = s..("\n  "..mName..": "..(enabled and "enabled" or "disabled"))
+	end
+
+	message.chat:sendMessage(s)
+end
+
+function system.disableModule(message, name)
+	if bot.isLoaded(name) then
+		message.chat:sendMessage("Module "..name.." is now "..(toggleModule(name) and "enabled." or "disabled."))
+	else
+		message.chat:sendMessage("Module "..name.." is not loaded.")
+	end
 end
 
 function system.status(message)

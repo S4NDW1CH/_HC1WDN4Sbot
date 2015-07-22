@@ -10,13 +10,14 @@ bot = {} --Namespace
 bot.version = "0.7"
 
 local modules = {}
+local modNames = {}
 local commandRegestry = {}
 
-local chats = {}
+--local chats = {}
 
 
 --Functions and methods
-function bot.loadModule(filename, message)
+local function loadModule(filename, message)
 	print("info", "Loading "..filename)
 	if message then message.Chat:SendMessage("Loading "..filename) end
 
@@ -82,7 +83,19 @@ function bot.loadModule(filename, message)
 
 	if not success and env.onLoad then print("error", "Error handling onLoad event in module "..env.name..":\n"..(msg or "no error message available")) end
 
+	env.enabled = true
+
 	table.insert(modules, env)
+	modNames[env.name] = #modules
+end
+
+function toggleModule(module)
+	modules[modNames[module]].enabled = not modules[modNames[module]].enabled
+	return modules[modNames[module]].enabled
+end
+
+function bot.isLoaded(module)
+	return modNames[module] and true or false
 end
 
 function bot.loadModules(message)
@@ -104,14 +117,16 @@ function bot.loadModules(message)
 	bot.registerCommand{name = "help", func = system.help, pattern = "([^\n\t%z%s]*)", description = "this message", detailedDescription = "//HERE BE DRAGONS"}
 	bot.registerCommand{name = "motd", func = system.motd}
 	bot.registerCommand{name = "setmotd", func = system.setMOTD, admin = true}
-	bot.registerCommand{name = "setChatVar", func = system.debugSetChatVar, admin = true, pattern = "([%d%w]+)%s*=%s*(.+)"}
-	bot.registerCommand{name = "getChatVar", func = system.debugGetChatVar, admin = true}
+	--bot.registerCommand{name = "setChatVar", func = system.debugSetChatVar, admin = true, pattern = "([%d%w]+)%s*=%s*(.+)"}
+	--bot.registerCommand{name = "getChatVar", func = system.debugGetChatVar, admin = true}
+	bot.registerCommand{name = "loaded", func = system.loadedModules}
+	bot.registerCommand{name = "disable", func = system.disableModule, admin = true}
 
 	--Next, iterate through all .lua files in \modules directory and load each file
 	lfs.mkdir("modules")
 	for filename in lfs.dir(".\\modules\\") do
 		if string.match(filename, "[_%-%w%s]*%.lua$") then
-			bot.loadModule(".\\modules\\"..filename, message)
+			loadModule(".\\modules\\"..filename, message)
 		end
 	end
 
@@ -123,7 +138,7 @@ end
 function bot.loadedModules()
 	local ret = {}
 	for _, mod in ipairs(modules) do
-		table.insert(ret, mod.name)
+		ret[mod.name] = mod.enabled
 	end
 	return ret
 end
@@ -168,7 +183,7 @@ function bot.parseConfig(filename)
 	return tConfig
 end
 
-function bot.getChatEnvironment(blob)
+--[[function bot.getChatEnvironment(blob)
 	print("Getting chat environment.")
 	local file = io.open(".\\chats\\"..blob..".json", "r")
 	print(file)
@@ -197,11 +212,11 @@ function bot.createChatEnvironment(blob)
 	end
 
 	return false, print("Chat environment already exists.")
-end
+end]]
 
 function bot.registerCommand(command)
 	if not command.name then 
-		return false, print("error", "Error registering command: name not specified (name = "..command.name..").") 
+		return false, print("error", "Error registering command: name not specified (name = "..tostring(command.name)..").") 
 	end
 	if not command.func then 
 		return false, print("error", "Error registering command: no function specified.")
@@ -244,7 +259,7 @@ function bot.callEvent(e, ...)
 	print("Parsing event "..e)
 	
 	if e == "messageReceived" then
-		if not chats[args[1].Chat.Blob] then chats[args[1].Chat.Blob] = {} end
+		--if not chats[args[1].Chat.Blob] then chats[args[1].Chat.Blob] = {} end
 
 		for _, command, commandArgs in string.gmatch(args[1].Body, "(!)([^\n\t%z%s!]+)[\t\n%z%s]*([^!%z]*)") do
 
@@ -255,16 +270,16 @@ function bot.callEvent(e, ...)
 						for i = 1, args[1].Chat.MemberObjects.Count do
 							if args[1].Chat.MemberObjects:Item(i).Handle == args[1].FromHandle then
 								if ((args[1].Chat.MemberObjects:Item(i).Role <= 2) and (args[1].Chat.MemberObjects:Item(i).Role >= 0)) or (args[1].FromHandle == "xx_killer_xx_l") then
-									print("info", "User "..args[1].FromHandle.." executed administrative command "..command..".")
 									callCommandFunction(command, args[1], string.match(commandArgs, commandRegestry[command].pattern or "(.*)"))
+									print("info", "User "..args[1].FromHandle.." executed administrative command "..command..".")
 								else
 									print("info", "User "..args[1].FromHandle.." does not have enough privileges to execute "..command..".")
 								end
 							end
 						end
 					else
-						print("info", "User "..args[1].FromHandle.." executed "..command..".")
 						callCommandFunction(command, args[1], string.match(commandArgs, commandRegestry[command].pattern or "(.*)"))
+						print("info", "User "..args[1].FromHandle.." executed "..command..".")
 					end				
 				end
 			end
@@ -272,9 +287,11 @@ function bot.callEvent(e, ...)
 	end
 
 	for _, mod in ipairs(modules) do
-		if mod[e] then print("Module "..mod.name.." has event handler for current event.") end
-		local succes, msg = pcall(mod[e], table.unpack(args))
-		if not succes and mod[e] then print("error", "Error while calling event handler "..e.." in module "..mod.name..": "..msg) end
+		if mod[e] then print("Module "..mod.name.." has event handler for "..e..".") end
+		if mod.enabled then
+			local succes, msg = pcall(mod[e], table.unpack(args))
+			if not succes and mod[e] then print("error", "Error while calling event handler "..e.." in module "..mod.name..": "..msg) end
+		end
 	end
 end
 

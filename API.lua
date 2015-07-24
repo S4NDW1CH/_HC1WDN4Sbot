@@ -7,11 +7,13 @@ json = require "json"
 
 bot = {} --Namespace
 
-bot.version = "0.7"
+bot.version = "0.8"
 
 local modules = {}
 local modNames = {}
 local commandRegestry = {}
+
+local eventQueue = {}
 
 --local chats = {}
 
@@ -254,8 +256,29 @@ local function callCommandFunction(command, ...)
 	if not s then print("error", "Error while executing command "..command..":\n"..e) end
 end
 
-function bot.callEvent(e, ...)
-	local args = {...}
+function bot.callEvent(name, ...)
+	table.insert(eventQueue, {name = name, args = {...}})
+	print("warn", "callEvent function is deprecated, use queueEvent instead.")
+end
+
+function bot.queueEvent(name, ...)
+	table.insert(eventQueue, {name = name, args = {...}})
+	print("Queued event "..name..". Current event queue:\n")
+	if config.debug then
+		local s = ""
+		for n, e in ipairs(eventQueue) do
+			s = s.."\t["..n.."] "..e.name
+		end
+		print(s)
+	end
+end
+
+function resolveEvents()
+	local currentEvent = eventQueue[1]
+	table.remove(eventQueue, 1)
+	local e = currentEvent.name
+	local args = currentEvent.args
+
 	print("Parsing event "..e)
 	
 	if e == "messageReceived" then

@@ -13,6 +13,7 @@ require "logging.file"
 require "COMevents"
 require "API"
 require "system"
+require "timer"
 
 
 --Global definitions variables and constants
@@ -41,6 +42,9 @@ debug_trace = false
 
 #If false, stops creating logs each session. (default: true)
 use_logs = true
+
+#Rate at which program updates (event and timer processing). Measured in ticks per second. (default: 10)
+tickrate = 10
 ]]
 
 	file:write(content)
@@ -54,11 +58,6 @@ if config.use_logs then logFile = logging.file("bot.log", "%Y-%m-%d-%H%M%S", "%d
 
 
 --Functions and methods
-
-function sleep(time)
-	local t = os.clock()
-	while os.clock()-t < time do end 
-end
 
 function print(level, ...)
 	if level == "info" or level == "warn" or level == "error" or level == "fatal" then
@@ -74,6 +73,12 @@ function print(level, ...)
 	end
   
   return true
+end
+
+local function sleep(t)
+	local t0 = os.clock()
+	while os.clock() < t0+t do
+	end
 end
 
 
@@ -92,8 +97,14 @@ function main()
 	print("info", "Attached to Skype.")
 	print("info", "Current user: "..skype.CurrentUser.FullName.." ("..skype.CurrentUser.Handle..").")
 	
-	print("info", "Event loop is running.")
-	luacom.StartMessageLoop(function() end)
+	print("info", "Main loop is running.")
+	--luacom.StartMessageLoop(function() end)
+	while true do
+		resolveTimers()
+		skype:Attach(nil, false)
+		resolveEvents()
+		sleep(1/(config.tickrate or 10))
+	end
 end
 main()
 

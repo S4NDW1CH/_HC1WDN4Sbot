@@ -48,15 +48,15 @@ setmetatable(skypeEvents, {__index = function(_, key) print("Unhandled event: ".
 
 function skypeEvents:Reply(command)
 	print("Got a reply to "..(command.Blocking and "" or "non-").."blocking command "..command.Command.."["..command.Id.."] :"..command.Reply.." (expected "..command.Expected..")")
-	bot.callEvent("commandReply", command)
+	--bot.callEvent("commandReply", command)
 end
 
 function skypeEvents:Command(command)
-	bot.callEvent("command", command)
+	--bot.callEvent("command", command)
 end
 
 function skypeEvents:Error(command, code, descr)
-	bot.callEvent("commandError", command, code, descr)
+	--bot.callEvent("commandError", command, code, descr)
 end
 
 function skypeEvents:AttachmentStatus(status)

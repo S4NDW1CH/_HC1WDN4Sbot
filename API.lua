@@ -274,6 +274,7 @@ function bot.queueEvent(name, ...)
 end
 
 function resolveEvents()
+	if not eventQueue[1] then return end
 	local currentEvent = eventQueue[1]
 	table.remove(eventQueue, 1)
 	local e = currentEvent.name

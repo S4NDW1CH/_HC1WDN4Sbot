@@ -17,8 +17,20 @@ function processVideo(id)
 
 	local videoDetails = json.decode(result)
 
-	local h, m, s = string.match(videoDetails.items[1].contentDetails.duration, "PT(%d*)H?(%d*)M?(%d*)S?")
-	local time = (h..":" or "")..(h and (string.format("%.2d:", m) or "00:") or (m..":" or "0:"))..string.format("%.2d", s)
-
+	local time = formatISO(videoDetails.items[1].contentDetails.duration)
+	
 	return "["..time.."] "..videoDetails.items[1].snippet.localized.title.." by "..videoDetails.items[1].snippet.channelTitle
+end
+
+function formatISO(time)
+	local seconds = 0
+	seconds = string.match(time, "(%d*)S") or 0
+	seconds = seconds + (string.match(time, "(%d*)M") or 0)*60
+	seconds = seconds + (string.match(time, "(%d*)H") or 0)*3600
+
+	if not string.match(time, "(%d*)H") then
+		return string.format("%.1d:%.2d", seconds/60, seconds%60)
+	else
+		return string.format("%.1d:%.2d:%.2d", seconds/3600, (seconds/60)%60, seconds%60)
+	end
 end

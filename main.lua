@@ -37,7 +37,7 @@ if not config then
 #If true, then debug output will be logged. (default: false)
 debug = false
 
-#If true, when debug level message is printed, print stack traceback along with it. Effective only when debug = true. (default: false)
+#If true, when log message is printed, print stack traceback along with it. Effective only when debug = true. (default: false)
 debug_trace = false
 
 #If false, stops creating logs each session. (default: true)
@@ -68,11 +68,11 @@ function print(level, ...)
 		for _, v in ipairs({...}) do
 			res = res.."\t"..tostring(v)
 		end
-		logConsole:debug(tostring(level)..res..(config.debug_trace and "\n"..debug.traceback() or ""))
-		if config.use_logs then logFile:debug(tostring(level)..res..(config.debug_trace and "\n"..debug.traceback() or "")) end
+		logConsole:debug(tostring(level)..res)
+		if config.use_logs then logFile:debug(tostring(level)..res) end
 	end
-  
-  return true
+
+	if config.debug and config.debug_trace then logConsole:debug(debug.traceback() or "") end
 end
 
 local function sleep(t)

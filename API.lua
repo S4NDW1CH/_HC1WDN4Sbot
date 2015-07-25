@@ -70,6 +70,7 @@ local function loadModule(filename, message)
 	env.utf8 = utf8
 
 	env.bot = bot
+	env.timer = timer
 	env.filenamename = string.match(filename, ".\\([%w%s_%.#]*%.lua)")
 	env.name = env.name or string.match(filename, ".\\([%w%s_%.#]*)%.lua")
 

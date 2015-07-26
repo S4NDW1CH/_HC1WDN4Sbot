@@ -48,27 +48,27 @@ setmetatable(skypeEvents, {__index = function(_, key) print("Unhandled event: ".
 
 function skypeEvents:Reply(command)
 	--print("Got a reply to "..(command.Blocking and "" or "non-").."blocking command "..command.Command.."["..command.Id.."] :"..command.Reply.." (expected "..command.Expected..")")
-	--bot.callEvent("commandReply", command)
+	--bot.queueEvent("commandReply", command)
 end
 
 function skypeEvents:Command(command)
-	--bot.callEvent("command", command)
+	--bot.queueEvent("command", command)
 end
 
 function skypeEvents:Error(command, code, descr)
-	--bot.callEvent("commandError", command, code, descr)
+	--bot.queueEvent("commandError", command, code, descr)
 end
 
 function skypeEvents:AttachmentStatus(status)
-	bot.callEvent("attachment"..TAttachmentStatus[status])
+	bot.queueEvent("attachment"..TAttachmentStatus[status])
 end
 
 function skypeEvents:UserStatus(status)
-	bot.callEvent("client"..TUserStatus[status])
+	bot.queueEvent("client"..TUserStatus[status])
 end
 
 function skypeEvents:OnlineStatus(user, status)
-	bot.callEvent("userStatus", user, status)
+	bot.queueEvent("userStatus", user, status)
 end
 
 function skypeEvents:CallStatus(call, status)
@@ -76,17 +76,12 @@ function skypeEvents:CallStatus(call, status)
 end
 
 function skypeEvents:MessageStatus(message, status)
-	--[[if not bot.getChatEnvironment(message.Chat.Blob) then
-		print(pcall(bot.createChatEnvironment, message.Chat.Blob))
-		local chat = bot.getChatEnvironment(message.Chat.Blob)
-		chat.chat = message.Chat
-	end]]
 	print("Event: MessageStatus status="..TChatMessageStatus[status].."("..status..") message.Body="..message.Body)
-	bot.callEvent("message"..TChatMessageStatus[status], message)
+	bot.queueEvent("message"..TChatMessageStatus[status], message)
 end
 
 function skypeEvents:UserMood(user, moodText)
-	bot.callEvent("moodChanged", user, moodText)
+	bot.queueEvent("moodChanged", user, moodText)
 end
 
 

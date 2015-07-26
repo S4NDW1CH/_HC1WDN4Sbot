@@ -15,7 +15,7 @@ local commandRegestry = {}
 
 local eventQueue = {}
 
---local chats = {}
+local chats = {}
 
 
 --Functions and methods
@@ -101,15 +101,13 @@ function bot.isLoaded(module)
 	return modNames[module] and true or false
 end
 
-function bot.loadModules(message)
+function loadModules(message)
 	print("info", "Loading modules...")
 
 	--First, clear array of modules
-	modules = nil
 	modules = {}
 
 	--Also, clear command registry
-	commandRegestry = nil
 	commandRegestry = {}
 
 	--Don't forget to load system commands
@@ -120,8 +118,6 @@ function bot.loadModules(message)
 	bot.registerCommand{name = "help", func = system.help, pattern = "([^\n\t%z%s]*)", description = "this message", detailedDescription = "//HERE BE DRAGONS"}
 	bot.registerCommand{name = "motd", func = system.motd}
 	bot.registerCommand{name = "setmotd", func = system.setMOTD, admin = true}
-	--bot.registerCommand{name = "setChatVar", func = system.debugSetChatVar, admin = true, pattern = "([%d%w]+)%s*=%s*(.+)"}
-	--bot.registerCommand{name = "getChatVar", func = system.debugGetChatVar, admin = true}
 	bot.registerCommand{name = "loaded", func = system.loadedModules}
 	bot.registerCommand{name = "disable", func = system.disableModule, admin = true}
 
@@ -139,19 +135,19 @@ function bot.loadModules(message)
 end
 
 function bot.loadedModules()
-	local ret = {}
+	local moduleList = {}
 	for _, mod in ipairs(modules) do
-		ret[mod.name] = mod.enabled
+		moduleList[mod.name] = mod.enabled
 	end
-	return ret
+	return moduleList
 end
 
 function bot.availableCommands()
-	local res = {}
+	local commandList = {}
 	for command, _ in pairs(commandRegestry) do
-		table.insert(res, command)
+		table.insert(commandList, command)
 	end
-	return res
+	return commandList
 end
 
 function bot.getDescription(command)
@@ -185,37 +181,6 @@ function bot.parseConfig(filename)
 
 	return tConfig
 end
-
---[[function bot.getChatEnvironment(blob)
-	print("Getting chat environment.")
-	local file = io.open(".\\chats\\"..blob..".json", "r")
-	print(file)
-	if file and not chat[blob] then
-		local content = file.read("*a")
-		print(content)
-		rawset(chats, blob, json.decode(content or "{}")) --Is this considered as hack? If so then I'm sorry. :(
-	end
-
-	return chats[blob], print("Got chat environment.")
-end
-
-function bot.createChatEnvironment(blob)
-	print("Setting chat environment.")
-	if not chats[blob] then
-		chats[blob] = {}
-		setmetatable(chats[blob], {__newindex = function(table, key, value)
-			rawset(table, key, value)
-			lfs.mkdir("chats")
-			local file = io.open(".\\chats\\"..blob..".json", "w")
-			file:write(json.encode(chats[blob]))
-			file:close()
-		end})
-
-		return true, print("Chat environment created.")
-	end
-
-	return false, print("Chat environment already exists.")
-end]]
 
 function bot.registerCommand(command)
 	if not command.name then 
@@ -284,8 +249,6 @@ function resolveEvents()
 	print("Parsing event "..e)
 	
 	if e == "messageReceived" then
-		--if not chats[args[1].Chat.Blob] then chats[args[1].Chat.Blob] = {} end
-
 		for _, command, commandArgs in string.gmatch(args[1].Body, "(!)([^\n\t%z%s!]+)[\t\n%z%s]*([^!%z]*)") do
 
 			print("Captured a command.", "_=".._, "command="..command, "commandArgs="..commandArgs)

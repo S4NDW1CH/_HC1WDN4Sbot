@@ -2,39 +2,14 @@
 
 system = {}
 
---local motd = {}
-
 
 --Functions and methods
-
---[[function system.debugGetChatVar(message, varName)
-	local chatEnv = bot.getChatEnvironment(message.Chat.Blob)
-	message.Chat:SendMessage(varName.." = "..(chatEnv[varName] or "nil"))
-end
-
-function system.debugSetChatVar(message, varName, val)
-	print(varName, val)
-	val = tonumber(val) or val
-	if val == "true" then val = true end
-	if val == "false" then val = false end
-	bot.getChatEnvironment(message.Chat.Blob)[varName] = val
-	message.Chat:SendMessage(varName.." = "..bot.getChatEnvironment(message.Chat.Blob)[varName] or "nil")
-end
-
-function system.motd(message)
-	message.Chat:SendMessage(motd[message.Chat.Blob] or "No MOTD available for this chat.\nTo set MOTD for this chat user with helper, master or creator status must run !setmotd in this chat.")
-end
-
-function system.setMOTD(message, text)
-	motd[message.Chat.Blob] = text
-	message.Chat:SendMessage("MOTD has been set to "..(motd[message.Chat.Blob] or "... Actually it hasn't been set to anything. I suspect something went wrong. You should check logs to confirm that."))
-end]]
 
 function system.reload(message)
 	print("info", "Received command to reload modules. Reloading...")
 	message.Chat:SendMessage("Reloading modules, please wait...")
 
-	bot.loadModules(message)
+	loadModules(message)
 end
 
 function system.loadedModules(message)
@@ -59,7 +34,7 @@ end
 function system.status(message)
 	print("info", "Received status command.")
 
-	message.Chat:SendMessage("Current statistics:\n".."  Number of modules loaded: "..#bot.loadedModules().."\n  Uptime: "..string.format("%d day(s) %.2d:%.2d:%.2d", os.clock()/(60*60*24), (os.clock()/(60*60))%24, os.clock()/60%60, os.clock()%60))
+	message.Chat:SendMessage("Current statistics:\n".."  Number of modules loaded: "..table.maxn(bot.loadedModules()).."\n  Uptime: "..string.format("%d day(s) %.2d:%.2d:%.2d", os.clock()/(60*60*24), (os.clock()/(60*60))%24, os.clock()/60%60, os.clock()%60))
 end
 
 function system.about(message)

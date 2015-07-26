@@ -1,23 +1,37 @@
-ballResponses = {"No.", "Yes.", "Maybe.", "Not now.", "Ask your mother.", "Ask your father.", "I dunno.",
- 				 "Umm... Maybe?", "Yes for sure!", "No for sure!", "I can't answer that.",
- 				 "Probably not.", "Probably yes.", "Ask GabeN. He knows that for sure.",
- 				 "Not now, I'm busy.", "If I'd answer that, it wouldn't be fun.",
- 				 "Really? You are asking me about THIS?", "4", "42",
- 				 "I think there's something in the Guide about this.", "EW!", "Let me think about this for a moment.",
- 				 "You sure you want an answer to that?", "Even I don't know answer to that.", "Don't worry about that.",
- 				 "Don't think about that.", "You shouldn't worry about that.", "Not anymore.",
- 				 "I would give an answer, but I'm too tired right now.", "Nah", "Meh", "Yeah", "Nope", "Uhh..",
- 				 "Go play some TF2 instead.", "Go play some CS:GO instead.", "Go play some games instead."}
+require "bit"
 
 function onLoad()
 	bot.registerCommand{name = "choice", func = choice, pattern = "(.+)"}
 	bot.registerCommand{name = "8ball", func = ball, pattern = "(.+)"}
 end
 
-function getBallResponse()
-	--local file = io.open("\\modules\\ballResponses.txt", "r")
+function hash(str)
+	local remainder
+	local hash = 0
+	if #str%2 ~= 0 then
+		remainder = string.byte(str, #str, #str)
+		str = string.sub(str, 1, #str-1)
+	end
 
+	for i = 1, #str, 2 do
+		hash = bit.bxor(hash, bit.bxor(string.byte(str, i, i+1)))
+	end
 
+	return bit.bxor(hash, remainder or 0)
+end
+
+function getBallResponse(hash)
+	local file = io.open(".\\modules\\ballResponses.txt", "r")
+
+	local responseList = {}
+	for line in file:lines() do
+		table.insert(responseList, line)
+	end
+
+	math.randomseed(hash)
+	math.random();math.random();math.random()
+
+	return responseList[math.random(#responseList)]
 end
 
 function dice(amount, sides)
@@ -46,11 +60,11 @@ function choice(message, args)
 	message.Chat:SendMessage("How about "..options[math.random(#options)]..", "..message.FromDisplayName.."?")
 end
 
-function ball(message)
+function ball(message, question)
 	math.randomseed(os.clock()/math.random())
 	math.random();math.random();math.random()
 
-	message.Chat:SendMessage(ballResponses[math.random(#ballResponses)])
+	message.Chat:SendMessage(getBallResponse(hash(question)))
 end
 
 function messageReceived(message)

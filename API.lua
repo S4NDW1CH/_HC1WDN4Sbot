@@ -38,7 +38,6 @@ local function loadModule(filename, message)
 	env.dofile = dofile
 	env.error = error
 	env.getmetatable = getmetatable
-	env.getfenv = getfenv
 	env.ipairs = ipairs
 	env.load = load
 	env.loadfile = loadfile
@@ -51,26 +50,30 @@ local function loadModule(filename, message)
 	env.rawget = rawget
 	env.rawlen = rawlen
 	env.rawset = rawset
-	env.require = require
 	env.select = select
 	env.setmetatable = setmetatable
-	env.setfenv = setfenv
 	env.tonumber = tonumber
 	env.tostring = tostring
 	env.type = type
 	env.xpcall = xpcall
 
-	env.corouine = coroutine
-	env.io = io
-	env.math = math
-	env.os = os
-	env.package = package
-	env.string = string
-	env.table = table
-	env.utf8 = utf8
+	env.require = function (module)
+		local env = getfenv(2)
+		env[string.match(module, "%.*(%w+)$")] = require(module)
+
+		print(module, env, env[string.match(module, "%.*(%w+)$")])
+	end
 
 	env.bot = bot
 	env.timer = timer
+
+
+	for moduleName, module in pairs(package.loaded) do
+		if module ~= _G or module ~= package or module ~= debug then
+			env[moduleName] = module
+		end
+	end
+
 	env.filenamename = string.match(filename, ".\\([%w%s_%.#]*%.lua)")
 	env.name = env.name or string.match(filename, ".\\([%w%s_%.#]*)%.lua")
 
@@ -229,11 +232,11 @@ end
 
 function bot.queueEvent(name, ...)
 	table.insert(eventQueue, {name = name, args = {...}})
-	print("Queued event "..name..". Current event queue:\n")
+	print("Queued event "..name..". Current event queue:")
 	if config.debug then
 		local s = ""
 		for n, e in ipairs(eventQueue) do
-			s = s.."\t["..n.."] "..e.name
+			s = s.."["..n.."] "..e.name.."\t"
 		end
 		print(s)
 	end

@@ -14,6 +14,12 @@ function onLoad()
 	bot.registerCommand{name = "8ball", func = ball, pattern = "(.+)"}
 end
 
+function getBallResponse()
+	--local file = io.open("\\modules\\ballResponses.txt", "r")
+
+
+end
+
 function dice(amount, sides)
 	print("info", "Rolling some die...")
 

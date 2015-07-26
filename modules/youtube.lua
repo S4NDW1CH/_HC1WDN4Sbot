@@ -1,5 +1,5 @@
-https = require "ssl.https"
-json = require "json"
+require "ssl.https"
+require "json"
 
 function messageReceived(message)
 	for video in message.Body:gmatch(".*%.youtube%.com/watch.*v=([_%-%w]+)[^\t\n%s%z]*") do

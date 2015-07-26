@@ -87,7 +87,7 @@ function main()
 	logConsole:setLevel(config.debug and "DEBUG" or "INFO")
 	if config.use_logs then logFile:setLevel(config.debug and "DEBUG" or "INFO") end
 
-	bot.loadModules()
+	loadModules()
 
 	print("info", "Connecting to Skype...")
 	local skype = luacom.CreateObject("Skype4COM.Skype", "Skype_")

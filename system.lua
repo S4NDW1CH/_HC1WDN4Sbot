@@ -43,7 +43,7 @@ function system.about(message)
 	message.Chat:SendMessage(
 [[Hey! My name is _HC1WDN4Sbot! I'm a Skype bot that does some useful and/or fun things.
   My creator: xx_killer_xx_l (he hates his Skype login)
-  I'm on GitHub: https://github.com/S4NDW1CH/_HC1WDN4Sbot
+  Check me on GitHub: https://github.com/S4NDW1CH/_HC1WDN4Sbot
   Current version: ]]..bot.version)
 end
 

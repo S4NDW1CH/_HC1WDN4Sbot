@@ -3,6 +3,9 @@ require "bit"
 function onLoad()
 	bot.registerCommand{name = "choice", func = choice, pattern = "(.+)"}
 	bot.registerCommand{name = "8ball", func = ball, pattern = "(.+)"}
+	bot.registerCommand{name = "8", func = ball, pattern = "(.+)"}
+	bot.registerCommand{name = "roll", func = roll}
+	bot.registerCommand{name = "r", func = roll}
 end
 
 function hash(str)
@@ -20,7 +23,7 @@ function hash(str)
 	return bit.bxor(hash, remainder or 0)
 end
 
-function getBallResponse(hash)
+function getBallResponse()
 	local file = io.open(".\\modules\\ballResponses.txt", "r")
 
 	local responseList = {}
@@ -28,7 +31,7 @@ function getBallResponse(hash)
 		table.insert(responseList, line)
 	end
 
-	math.randomseed(hash)
+	math.randomseed(os.time())
 	math.random();math.random();math.random()
 
 	return responseList[math.random(#responseList)]
@@ -67,11 +70,16 @@ function ball(message, question)
 	message.Chat:SendMessage(getBallResponse(hash(question)))
 end
 
-function messageReceived(message)
+function roll(message, roll)
+	local amount, sides = string.match(roll or "1d20", "(%d*)d(%d+)")
+	message.chat:sendMessage(message.FromDisplayName.." rolled "..dice((amount > 0 and amount or 1), sides))
+end
+
+--[[function messageReceived(message)
 	for amount, sides in message.Body:gmatch("!(%d*)d(%d+)") do
 		print("info", tostring(amount))
-		message.Chat:SendMessage(message.FromDisplayName.." rolled "..dice((#amount > 0 and amount or 1), sides))
+		message.Chat:SendMessage(message.FromDisplayName.." rolled "..dice((amount > 0 and amount or 1), sides))
 	end
 
 	return true
-end
+end]]

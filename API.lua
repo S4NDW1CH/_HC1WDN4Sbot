@@ -13,6 +13,8 @@ local modules = {}
 local modNames = {}
 local commandRegestry = {}
 
+local moduleLoaders = {}
+
 local eventQueue = {}
 
 local chats = {}
@@ -23,8 +25,8 @@ local function loadModule(filename, message)
 	print("info", "Loading "..filename)
 	if message then message.Chat:SendMessage("Loading "..filename) end
 
-	local module, err = loadfile(filename)
-	if not module then
+	local mod, err = loadfile(filename)
+	if not mod then
 		if message then message.Chat:SendMessage("Error loading module "..filename..":\n"..err) end
 		return print("error", "Error loading module "..filename..":\n"..err)
 	end
@@ -39,17 +41,10 @@ local function loadModule(filename, message)
 	env.error = error
 	env.getmetatable = getmetatable
 	env.ipairs = ipairs
-	env.load = load
-	env.loadfile = loadfile
-	env.loadstring = loadstring
 	env.next = next
 	env.pairs = pairs
 	env.pcall = pcall
 	env.print = print
-	env.rawequal = rawequal
-	env.rawget = rawget
-	env.rawlen = rawlen
-	env.rawset = rawset
 	env.select = select
 	env.setmetatable = setmetatable
 	env.tonumber = tonumber
@@ -57,11 +52,74 @@ local function loadModule(filename, message)
 	env.type = type
 	env.xpcall = xpcall
 
-	env.require = function (module)
-		local env = getfenv(2)
-		env[string.match(module, "%.*(%w+)$")] = require(module)
+	env.module = module
 
-		print(module, env, env[string.match(module, "%.*(%w+)$")])
+	env.package = {
+		preload = {},
+		path = package.path,
+		cpath = package.cpath,
+
+		loaded = {}
+	}
+
+	for name, lib in pairs(package.loaded) do
+		if not (name == "_G" or name == "debug" or name == "package") then
+			env.package.loaded[name] = lib
+		end
+	end
+
+	env.require = function (m)
+		local env = getfenv(2)
+
+		print(m, env, env[string.match(m, "%.*(%w+)$")])
+
+		if package.loaded[m] and not env.package.loaded[m] then
+			if moduleLoaders[m] then
+				local global = _G
+				setfenv(0, env)
+				env.package.loaded[m] = moduleLoaders[m]() or true
+				setfenv(0, global)
+
+			else
+				for i = 1, 4 do
+					local moduleLoader = package.loaders[i](m)
+
+					if type(moduleLoader) == "function" then
+						setfenv(moduleLoader, env)
+						local lib = moduleLoader()
+						env.package.loaded[m] = lib or true
+						break
+					end
+				end
+			end
+			
+		end
+
+		if not env.package.loaded[m] then
+			local errorMessage = ""
+			local success = false
+
+			for i = 1, 4 do
+				local moduleLoader = package.loaders[i](m)
+
+				if type(moduleLoader) ~= "function" then
+					errorMessage = errorMessage .. moduleLoader or ""
+				else
+					success = true
+					moduleLoaders[m] = moduleLoader
+					local global = _G
+					print(getfenv(moduleLoader), _G)
+					setfenv(0, env)
+					env.package.loaded[m] = moduleLoader() or true
+					setfenv(0, global)
+					break
+				end
+			end
+
+			if not success then error("module '"..m.."' not found:"..errorMessage) end
+		end
+
+		return env.package.loaded[m]
 	end
 
 	env.bot = bot
@@ -77,8 +135,8 @@ local function loadModule(filename, message)
 	env.filenamename = string.match(filename, ".\\([%w%s_%.#]*%.lua)")
 	env.name = env.name or string.match(filename, ".\\([%w%s_%.#]*)%.lua")
 
-	setfenv(module, env)
-	local success, msg = pcall(module)
+	setfenv(mod, env)
+	local success, msg = pcall(mod)
 
 	if not success then
 		if message then message.Chat:SendMessage("Error on initializing "..filename..":\n"..(msg or "")) end
@@ -216,13 +274,24 @@ function bot.isRegistered(command)
 end
 
 function bot.unregisterCommand(command)
+	local env = getfenv(2)
+
+	if env.name ~= commandRegestry[command].owner then
+		print("error", "Could not unregister command: permission denied.")
+		return false
+	end
+
 	print("info" ,"Unregistering command "..command..".")
 	commandRegestry[command] = nil
+
+	return true
 end
 
-local function callCommandFunction(command, ...)
-	local s, e = pcall(commandRegestry[command].func, table.unpack({...}))
-	if not s then print("error", "Error while executing command "..command..":\n"..e) end
+local function processCommand(command, ...)
+	local message = ...
+	local s, e = pcall(commandRegestry[command].func, ...)
+	if not s then print("error", "Error while executing command "..command..":\n"..e) 
+		message.chat:sendMessage("Error while executing command "..command..":\n"..e) end
 end
 
 function bot.callEvent(name, ...)
@@ -261,7 +330,7 @@ function resolveEvents()
 						for i = 1, args[1].Chat.MemberObjects.Count do
 							if args[1].Chat.MemberObjects:Item(i).Handle == args[1].FromHandle then
 								if ((args[1].Chat.MemberObjects:Item(i).Role <= 2) and (args[1].Chat.MemberObjects:Item(i).Role >= 0)) or (args[1].FromHandle == "xx_killer_xx_l") then
-									callCommandFunction(command, args[1], string.match(commandArgs, commandRegestry[command].pattern or "(.*)"))
+									processCommand(command, args[1], string.match(commandArgs, commandRegestry[command].pattern or "(.*)"))
 									print("info", "User "..args[1].FromHandle.." executed administrative command "..command..".")
 								else
 									print("info", "User "..args[1].FromHandle.." does not have enough privileges to execute "..command..".")
@@ -269,7 +338,7 @@ function resolveEvents()
 							end
 						end
 					else
-						callCommandFunction(command, args[1], string.match(commandArgs, commandRegestry[command].pattern or "(.*)"))
+						processCommand(command, args[1], string.match(commandArgs, commandRegestry[command].pattern or "(.*)"))
 						print("info", "User "..args[1].FromHandle.." executed "..command..".")
 					end				
 				end

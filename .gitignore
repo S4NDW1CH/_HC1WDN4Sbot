@@ -46,3 +46,7 @@ luac.out
 Skype4COM.dll
 Skype/
 *.json
+
+# Sublime Text
+*.sublime-workspace
+*.sublime-project

@@ -18,13 +18,13 @@ function resolveTimers()
 	end
 end
 
-function timer.newTimer(properties)
-	assert(properties.type, "Timer must have type.")
-	assert(properties.time, "Timer must have time.")
+function timer.newTimer(property)
+	assert(property.type, "Timer must have type.")
+	assert(property.time, "Timer must have time.")
 
-	local t = {type = properties.type, time = properties.time}
+	local t = {type = property.type, time = property.time}
 
-	if properties.type == "delay" then t.startTime = os.clock() end
+	if property.type == "delay" then t.startTime = os.clock() end
 
 	t.start = start
 	t.stop = stop

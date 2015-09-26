@@ -1,46 +1,62 @@
-replys = {}
-justRegistered = false
+require "json"
+require "lfs"
+
+registeredCommands = {}
 
 function onLoad()
-	bot.registerCommand{name = "reply", func = reply, pattern = "([^~]+)[\t%s]*~[\t%s]*(.+)", admin = true}
+	lfs.mkdir(".\\modules\\"..name)
+	local file = io.open(".\\modules\\"..name.."\\commands.json", "r")
+	if file then
+		registeredCommands = json.decode(file:read("*a"))
+		file:close()
+	else
+		local file = io.open(".\\modules\\"..name.."\\commands.json", "w")
+		file:write("{}")
+		file:close()
+	end
+
+	for command, text in pairs(registeredCommands) do
+		bot.registerCommand{name = command, func = function(message) message.chat:sendMessage(text) end}
+	end
+
+	bot.registerCommand{name = "command", func = command, admin = true}
+	bot.registerCommand{name = "c", func = command, admin = true}
+	bot.registerCommand{name = "commandlist", func = commandList, admin = true}
+	bot.registerCommand{name = "cl", func = commandList, admin = true}
+	bot.registerCommand{name = "commanddelete", func = deleteCommand, admin = true}
+	bot.registerCommand{name = "cd", func = deleteCommand, admin = true}
 end
 
-local function save()
-	local file = io.open("chat_replys.json", "w")
-	file:write("{")
-	local t = {}
-	for chat, words in pairs(replys) do
-		local c = "\""..chat.."\":{"
-		for word, reply in pairs(words) do
-			local t1 = {}
-			table.insert(t1, "\""..word.."\":\""..reply.."\"")
-			c = c..table.concat(t1, ",")
-		end
-		table.insert(t, c.."}")
-	end
-	file:write(table.concat(t, ","))
-	file:write("}")
+function command(message, param)
+	local commandName, text = string.match(param, "^(%S+)%s*(.*)")
+	print("info", param, commandName, text)
+
+	bot.registerCommand{name = commandName, func = function(message) message.chat:sendMessage(text) end}
+	registeredCommands[commandName] = text
+
+	message.chat:sendMessage("Registered "..commandName..".")
+
+	local file = io.open(".\\modules\\"..name.."\\commands.json", "w")
+	file:write(json.encode(registeredCommands))
 	file:close()
 end
 
-function reply(message, word, rep)
-	justRegistered = true
-	oWord = word
-	word = string.gsub(word, "([%(%)%.%^%$%%%-%+%*%?])", "%%%0")
-	word = string.gsub(word, "(%%%*)", "%.%*")
-	replys[message.Chat.Blob] = {}
-	replys[message.Chat.Blob][word] = rep
-	
-	message.Chat:SendMessage("Now replying to "..oWord.." with "..replys[message.Chat.Blob][word]..".")
-	save()
+function commandList(message)
+	local s = ""
+
+	for command, _ in pairs(registeredCommands) do
+		s = s.."\n"..command
+	end
+
+	message.chat:sendMessage(s)
 end
 
-function messageReceived(message)
-	if justRegistered then justRegistered = false; return end
-	if not replys[message.Chat.Blob] then return print("Ain't got no replys son.") end
-	for word, rep in pairs(replys[message.Chat.Blob]) do
-		for _ in message.Body:gmatch("("..word..")") do
-			message.Chat:SendMessage(rep)
-		end
+function deleteCommand(message, command)
+	local success = bot.unregisterCommand(command)
+	if not succes then
+		message.chat.sendMessage("Could not delete "..command..".")
 	end
+
+	registeredCommands[command] = nil
+	message.chat:sendMessage("Deleted "..command..".")
 end

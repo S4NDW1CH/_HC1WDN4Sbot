@@ -105,6 +105,7 @@ function main()
 		resolveEvents()
 		sleep(1/(config.tickrate or 10))
 	end
+	print("info", "Shutting down...")
 end
 main()
 

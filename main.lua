@@ -61,15 +61,15 @@ if config.use_logs then logFile = logging.file("bot.log", "%Y-%m-%d-%H%M%S", "%d
 
 function print(level, ...)
 	if level == "info" or level == "warn" or level == "error" or level == "fatal" then
-		logConsole:log(string.upper(level), table.unpack({...}))
+		logConsole:log(string.upper(level), tostring(table.unpack({...}))--[[..((level == "error") and "\n"..debug.traceback() or "")]])
 		if config.use_logs then logFile:log(string.upper(level), table.unpack({...})) end
 	else
-		local res = ""
+		local str = ""
 		for _, v in ipairs({...}) do
-			res = res.."\t"..tostring(v)
+			str = str.."\t"..tostring(v)
 		end
-		logConsole:debug(tostring(level)..res)
-		if config.use_logs then logFile:debug(tostring(level)..res) end
+		logConsole:debug(tostring(level)..str)
+		if config.use_logs then logFile:debug(tostring(level)..str) end
 	end
 
 	if config.debug and config.debug_trace then logConsole:debug(debug.traceback() or "") end

@@ -13,14 +13,15 @@ local modules = {}
 local modNames = {}
 local commandRegestry = {}
 
-local moduleLoaders = {}
-
 local eventQueue = {}
 
 local chats = {}
 
-
+-----------------------
 --Functions and methods
+-----------------------
+
+--Non API functions
 local function loadModule(filename, message)
 	print("info", "Loading "..filename)
 	if message then message.Chat:SendMessage("Loading "..filename) end
@@ -52,95 +53,117 @@ local function loadModule(filename, message)
 	env.type = type
 	env.xpcall = xpcall
 
-	env.module = module
+	env.module = function (name, ...)
+		local env = getfenv(2)
+		local module = {}
+
+		--[[print("Before module()")
+		for k,v in pairs(env.package.loaded) do
+			print(k, v)
+		end
+		--]]
+
+		if env[name] and type(env[name]) == "table" then
+			module = env[name]
+		end
+
+		if env.package.loaded[name] and type(env.package.loaded[name]) == "table" then
+			module = env.package.loaded[name]
+		end
+
+		for _, param in pairs({...}) do
+			param(module)
+		end
+
+		module._NAME = name
+		module._M = module
+
+		env.package.loaded[name] = module
+
+		--[[print("After module()")
+		for k,v in pairs(env.package.loaded) do
+			print(k, v)
+		end--]]
+
+		setfenv(2, module)
+	end
+
+	env.require = function (name)
+		if type(name) ~= "string" then error("bad argument #1 to 'require' (string expected, got "..type(name)..")") end
+		local env = getfenv(2)
+
+		print("Loading module "..name.." within "..tostring(env).." ("..(env.name or "global")..")")
+
+		if not env.package.loaded[name] then
+			local errorMessage = ""
+			local success = false
+
+			local loaders = package.loaders
+			local _G = _G
+			setfenv(0, env)
+
+			for i = 1, 4 do
+				local moduleLoader = loaders[i](name)
+
+				if type(moduleLoader) ~= "function" then
+					errorMessage = errorMessage .. moduleLoader or ""
+				else
+					success = true
+					local loaderReturn = moduleLoader()
+					if not env.package.loaded[name] then
+						env.package.loaded[name] = loaderReturn or true
+					end
+					break
+				end
+			end
+
+			setfenv(0, _G)
+
+			if not success then 
+				error("module '"..name.."' not found:"..errorMessage)
+			else
+				print("Successfully loaded "..name.." to "..tostring(env).." ("..env.name..")")
+			end
+		end
+
+		return env.package.loaded[name]
+	end
+
+	local function seeall(module)
+		setmetatable(module, {__index = getfenv(2)})
+	end
 
 	env.package = {
 		preload = {},
 		path = package.path,
 		cpath = package.cpath,
 
+		seeall = seeall,
+
 		loaded = {}
 	}
 
 	for name, lib in pairs(package.loaded) do
-		if not (name == "_G" or name == "debug" or name == "package") then
+		if (not (name == "_G" or name == "debug" or name == "package")) then
+			print("Adding "..name.." to loaded modules")
 			env.package.loaded[name] = lib
+			if type(lib) ~= "boolean" then env[name] = lib end
 		end
-	end
-
-	env.require = function (m)
-		local env = getfenv(2)
-
-		print(m, env, env[string.match(m, "%.*(%w+)$")])
-
-		if package.loaded[m] and not env.package.loaded[m] then
-			if moduleLoaders[m] then
-				local global = _G
-				setfenv(0, env)
-				env.package.loaded[m] = moduleLoaders[m]() or true
-				setfenv(0, global)
-
-			else
-				for i = 1, 4 do
-					local moduleLoader = package.loaders[i](m)
-
-					if type(moduleLoader) == "function" then
-						setfenv(moduleLoader, env)
-						local lib = moduleLoader()
-						env.package.loaded[m] = lib or true
-						break
-					end
-				end
-			end
-			
-		end
-
-		if not env.package.loaded[m] then
-			local errorMessage = ""
-			local success = false
-
-			for i = 1, 4 do
-				local moduleLoader = package.loaders[i](m)
-
-				if type(moduleLoader) ~= "function" then
-					errorMessage = errorMessage .. moduleLoader or ""
-				else
-					success = true
-					moduleLoaders[m] = moduleLoader
-					local global = _G
-					print(getfenv(moduleLoader), _G)
-					setfenv(0, env)
-					env.package.loaded[m] = moduleLoader() or true
-					setfenv(0, global)
-					break
-				end
-			end
-
-			if not success then error("module '"..m.."' not found:"..errorMessage) end
-		end
-
-		return env.package.loaded[m]
 	end
 
 	env.bot = bot
 	env.timer = timer
 
-
-	for moduleName, module in pairs(package.loaded) do
-		if module ~= _G or module ~= package or module ~= debug then
-			env[moduleName] = module
-		end
-	end
-
 	env.filenamename = string.match(filename, ".\\([%w%s_%.#]*%.lua)")
 	env.name = env.name or string.match(filename, ".\\([%w%s_%.#]*)%.lua")
 
 	setfenv(mod, env)
-	local success, msg = pcall(mod)
+	local traceback
+	local success, msg = xpcall(mod, function (obj) traceback = debug.traceback(obj, "", 1) end)
 
 	if not success then
-		if message then message.Chat:SendMessage("Error on initializing "..filename..":\n"..(msg or "")) end
-		return print("error", "Error on initializing "..filename..":\n"..(msg or ""))
+		if message then message.Chat:SendMessage("Error on initializing "..filename..":\n"..(msg or "")..traceback) end
+		return print("error", "Error on initializing "..filename..":\n"..(msg or "")..traceback)
 	end
 
 	success, msg = pcall(env.onLoad)
@@ -166,7 +189,7 @@ function loadModules(message)
 	print("info", "Loading modules...")
 
 	--First, clear array of modules
-	modules = {}
+	modules = {len = 0}
 
 	--Also, clear command registry
 	commandRegestry = {}
@@ -192,13 +215,14 @@ function loadModules(message)
 
 	--And now we are ready to go!
 	print("info", "All modules were loaded.")
-	if message then message.Chat:SendMessage("All modules were successfully loaded.") end
+	if message then message.Chat:SendMessage("All modules were loaded.") end
 end
 
 function bot.loadedModules()
-	local moduleList = {}
+	local moduleList = {len = 0}
 	for _, mod in ipairs(modules) do
 		moduleList[mod.name] = mod.enabled
+		moduleList.len = moduleList.len + 1
 	end
 	return moduleList
 end
@@ -266,11 +290,7 @@ function bot.registerCommand(command)
 end
 
 function bot.isRegistered(command)
-	if commandRegestry[command] then
-		return true
-	else
-		return false
-	end
+	return commandRegestry[command] ~= nil
 end
 
 function bot.unregisterCommand(command)
@@ -285,13 +305,6 @@ function bot.unregisterCommand(command)
 	commandRegestry[command] = nil
 
 	return true
-end
-
-local function processCommand(command, ...)
-	local message = ...
-	local s, e = pcall(commandRegestry[command].func, ...)
-	if not s then print("error", "Error while executing command "..command..":\n"..e) 
-		message.chat:sendMessage("Error while executing command "..command..":\n"..e) end
 end
 
 function bot.callEvent(name, ...)
@@ -311,6 +324,16 @@ function bot.queueEvent(name, ...)
 	end
 end
 
+local function processCommand(command, ...)
+	print(...)
+	local message = ...
+	local s, e = pcall(commandRegestry[command].func, ...)
+	if not s then
+		print("error", "Error while executing command "..command..":\n"..e) 
+		message.chat:sendMessage("Error while executing command "..command..":\n"..e)
+	end
+end
+
 function resolveEvents()
 	if not eventQueue[1] then return end
 	local currentEvent = eventQueue[1]
@@ -323,25 +346,23 @@ function resolveEvents()
 	if e == "messageReceived" then
 		for _, command, commandArgs in string.gmatch(args[1].Body, "(!)([^\n\t%z%s!]+)[\t\n%z%s]*([^!%z]*)") do
 
-			print("Captured a command.", "_=".._, "command="..command, "commandArgs="..commandArgs)
-			if _ == "!" then
-				if commandRegestry[command] then
-					if commandRegestry[command].admin then
-						for i = 1, args[1].Chat.MemberObjects.Count do
-							if args[1].Chat.MemberObjects:Item(i).Handle == args[1].FromHandle then
-								if ((args[1].Chat.MemberObjects:Item(i).Role <= 2) and (args[1].Chat.MemberObjects:Item(i).Role >= 0)) or (args[1].FromHandle == "xx_killer_xx_l") then
-									processCommand(command, args[1], string.match(commandArgs, commandRegestry[command].pattern or "(.*)"))
-									print("info", "User "..args[1].FromHandle.." executed administrative command "..command..".")
-								else
-									print("info", "User "..args[1].FromHandle.." does not have enough privileges to execute "..command..".")
-								end
+			print("Captured a command.", "command="..command, "commandArgs="..commandArgs)
+			if commandRegestry[command] then
+				if commandRegestry[command].admin then
+					for i = 1, args[1].Chat.MemberObjects.Count do
+						if args[1].Chat.MemberObjects:Item(i).Handle == args[1].FromHandle then
+							if ((args[1].Chat.MemberObjects:Item(i).Role <= 2) and (args[1].Chat.MemberObjects:Item(i).Role >= 0)) or (args[1].FromHandle == "xx_killer_xx_l") then
+								processCommand(command, args[1], string.match(commandArgs, commandRegestry[command].pattern or "(.*)"))
+								print("info", "User "..args[1].FromHandle.." executed administrative command "..command..".")
+							else
+								print("info", "User "..args[1].FromHandle.." does not have enough privileges to execute "..command..".")
 							end
 						end
-					else
-						processCommand(command, args[1], string.match(commandArgs, commandRegestry[command].pattern or "(.*)"))
-						print("info", "User "..args[1].FromHandle.." executed "..command..".")
-					end				
-				end
+					end
+				else
+					processCommand(command, args[1], string.match(commandArgs, commandRegestry[command].pattern or "(.*)"))
+					print("info", "User "..args[1].FromHandle.." executed "..command..".")
+				end				
 			end
 		end
 	end

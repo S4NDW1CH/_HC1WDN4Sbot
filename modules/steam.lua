@@ -17,7 +17,7 @@ function selectGame(message, profile)
 	if prifile[1]:tag() == "error" then
 		message.chat:sendMessage(profile[1][1])
 	else
-		
+
 		local games = http.request("http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=AD09DAB8D35DB1BF3319083CF71C98B3&include_played_free_games=1&include_appinfo=1&steamid="..profile[1][1])
 		assert(games, "Could not get JSON data")
 		games = json.decode(games)

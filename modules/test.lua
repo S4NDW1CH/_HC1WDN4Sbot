@@ -38,8 +38,6 @@ function getBallResponse()
 end
 
 function dice(amount, sides)
-	print("info", "Rolling some die...")
-
 	math.randomseed(os.clock()/math.random())
 	math.random();math.random();math.random()
 
@@ -52,15 +50,26 @@ function dice(amount, sides)
 end
 
 function choice(message, args)
+	if not args then
+		return message.Chat:SendMessage("I CHOSE NOTHING!")
+	end
+
 	local options = {} 
 	for option in args:gmatch(",?%s*([^%,%.\n\t%z]*),?") do
 		table.insert(options, option)
 	end
-	print("info", "Choosing something...")
 	math.randomseed(os.clock()/math.random())
 	math.random();math.random();math.random()
 
-	message.Chat:SendMessage("How about "..options[math.random(#options)]..", "..message.FromDisplayName.."?")
+	--This construct here needed because sometimes choice
+	--ends up being zero-length string and I have absolutely
+	--no idea why. :(
+	local choice
+	repeat 
+		choice = options[math.random(1, #options)]
+	until (choice and #choice > 0)
+
+	message.Chat:SendMessage("How about "..choice..", "..message.FromDisplayName.."?")
 end
 
 function ball(message, question)
@@ -72,7 +81,7 @@ end
 
 function roll(message, roll)
 	local amount, sides = string.match(roll or "1d20", "(%d*)d(%d+)")
-	message.chat:sendMessage(message.FromDisplayName.." rolled "..dice((amount > 0 and amount or 1), sides))
+	message.chat:sendMessage(message.FromDisplayName.." rolled "..dice((amount and amount > 0) and amount or 1, sides or 20))
 end
 
 --[[function messageReceived(message)

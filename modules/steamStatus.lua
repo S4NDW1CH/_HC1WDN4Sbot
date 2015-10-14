@@ -1,4 +1,4 @@
-require "ssl.https"
+https = require "ssl.https"
 require "json"
 
 function onLoad()

@@ -41,8 +41,8 @@ function system.about(message)
 	print("info", "Received about command.")
 
 	message.Chat:SendMessage(
-[[Hey! My name is _HC1WDN4Sbot! I'm a Skype bot that does some useful and/or fun things.
-  My creator: xx_killer_xx_l (he hates his Skype login)
+[[Hey! My name is ]]..skype.currentUser.fullName..[[! I'm a Skype bot that does some useful and/or fun things.
+  My creator: S4NDW1CH_
   Check me on GitHub: https://github.com/S4NDW1CH/_HC1WDN4Sbot
   Current version: ]]..bot.version)
 end

@@ -7,7 +7,7 @@ json = require "json"
 
 bot = {} --Namespace
 
-bot.version = "0.8"
+bot.version = "0.9"
 
 local modules = {}
 local modNames = {}
@@ -17,94 +17,117 @@ local eventQueue = {}
 
 local chats = {}
 
+
 -----------------------
 --Functions and methods
 -----------------------
 
 --Non API functions
+
+--This function is backbone of the whole program
+--Be careful when editing this or else everything might break
 local function loadModule(filename, message)
 	print("info", "Loading "..filename)
 	if message then message.Chat:SendMessage("Loading "..filename) end
 
+	--Load module file and check if it was done successfully
 	local mod, err = loadfile(filename)
 	if not mod then
 		if message then message.Chat:SendMessage("Error loading module "..filename..":\n"..err) end
 		return print("error", "Error loading module "..filename..":\n"..err)
 	end
 
+	--Define module environment
 	local env = {}
 
 	env._G = env
-	env._ENV = env
+	env._ENV = env 		--This allows writing in 5.2 and 5.3 style
 	env._VERSION = _VERSION
 	env.assert = assert
 	env.dofile = dofile
 	env.error = error
-	env.getmetatable = getmetatable
+	env.getmetatable = getmetatable		--Is it really that dangerous?
 	env.ipairs = ipairs
 	env.next = next
 	env.pairs = pairs
 	env.pcall = pcall
 	env.print = print
 	env.select = select
-	env.setmetatable = setmetatable
+	env.setmetatable = setmetatable		--^
 	env.tonumber = tonumber
 	env.tostring = tostring
 	env.type = type
 	env.xpcall = xpcall
 
+	env.skype = skype 		--Not sure if this is safe
+
+	--Sandbox compatible implementation of module()
 	env.module = function (name, ...)
+		--Closures won't work here and at the same time they might
+		--actually take effect here so to be safe environment of
+		--the module is fetched each time
 		local env = getfenv(2)
-		local module = {}
+		local module = {}		--New environment that will be applied later
 
-		--[[print("Before module()")
-		for k,v in pairs(env.package.loaded) do
-			print(k, v)
-		end
-		--]]
-
+		--Checking if there is a table defined for module()
+		--If there is, then it is used as new environment to be
 		if env[name] and type(env[name]) == "table" then
 			module = env[name]
 		end
 
+		--Checking if there is a table defined by a library that can be used as new environment
+		--Since this is checked after previous check, if this check succeeds then it overrides previous one
 		if env.package.loaded[name] and type(env.package.loaded[name]) == "table" then
 			module = env.package.loaded[name]
 		end
 
+		--Apply any specified option to the new environment
 		for _, param in pairs({...}) do
 			param(module)
 		end
 
+		--Add environment variables that are supposed to be added by 
 		module._NAME = name
 		module._M = module
 
+		--Make sure require() will return environment table instead of "true"
 		env.package.loaded[name] = module
 
-		--[[print("After module()")
-		for k,v in pairs(env.package.loaded) do
-			print(k, v)
-		end--]]
-
+		--Finally apply new environment to the thread
 		setfenv(2, module)
 	end
 
+	--Sandbox compatible implementation of require()
 	env.require = function (name)
+		--Assert and type-check argument
 		if type(name) ~= "string" then error("bad argument #1 to 'require' (string expected, got "..type(name)..")") end
+		
+		--Get environment in which library will be loaded
 		local env = getfenv(2)
 
 		print("Loading module "..name.." within "..tostring(env).." ("..(env.name or "global")..")")
 
+		--Check if library was already loaded
 		if not env.package.loaded[name] then
-			local errorMessage = ""
-			local success = false
+			--If library wasn't loaded
+			
+			local errorMessage = "" 	--Error message that will be displayed if loading fail
+			local success = false 		--Loading success flag
 
-			local loaders = package.loaders
+			local loaders = package.loaders 	--Local version of loaders table because in module environment there isn't one
 			local _G = _G
+
+			--Set environment of main (current) thread to module's
+			--It is required because loader function makes changes to the environment
+			--of current thread and it is impossible to change environment of loader
+			--function via setfenv()
 			setfenv(0, env)
 
+			--Iterate through loaders to see which one works
 			for i = 1, 4 do
+				--Attempt to load library via one of the loaders
 				local moduleLoader = loaders[i](name)
-
+				
 				if type(moduleLoader) ~= "function" then
 					errorMessage = errorMessage .. moduleLoader or ""
 				else
@@ -154,8 +177,10 @@ local function loadModule(filename, message)
 	env.bot = bot
 	env.timer = timer
 
-	env.filenamename = string.match(filename, ".\\([%w%s_%.#]*%.lua)")
-	env.name = env.name or string.match(filename, ".\\([%w%s_%.#]*)%.lua")
+	env.filename = string.match(filename, ".\\([%w%s_%.#]*%.lua)")
+	env.name = string.match(filename, ".\\([%w%s_%.#]*)%.lua")
+	env._M = env.filename		--These two allow writing program modules like Lua modules
+	env._NAME = env.name
 
 	setfenv(mod, env)
 	local traceback
@@ -174,15 +199,6 @@ local function loadModule(filename, message)
 
 	table.insert(modules, env)
 	modNames[env.name] = #modules
-end
-
-function toggleModule(module)
-	modules[modNames[module]].enabled = not modules[modNames[module]].enabled
-	return modules[modNames[module]].enabled
-end
-
-function bot.isLoaded(module)
-	return modNames[module] and true or false
 end
 
 function loadModules(message)
@@ -218,6 +234,19 @@ function loadModules(message)
 	if message then message.Chat:SendMessage("All modules were loaded.") end
 end
 
+function toggleModule(module)
+	modules[modNames[module]].enabled = not modules[modNames[module]].enabled
+	return modules[modNames[module]].enabled
+end
+
+---------------
+--API functions
+---------------
+
+function bot.isLoaded(module)
+	return modNames[module] and true or false
+end
+
 function bot.loadedModules()
 	local moduleList = {len = 0}
 	for _, mod in ipairs(modules) do
@@ -225,46 +254,6 @@ function bot.loadedModules()
 		moduleList.len = moduleList.len + 1
 	end
 	return moduleList
-end
-
-function bot.availableCommands()
-	local commandList = {}
-	for command, _ in pairs(commandRegestry) do
-		table.insert(commandList, command)
-	end
-	return commandList
-end
-
-function bot.getDescription(command)
-	return commandRegestry[command].description
-end
-
-function bot.getDetailedDescription(command)
-	return commandRegestry[command].detailedDescription
-end
-
-function bot.parseConfig(filename)
-	print("info", "Parsing "..filename.."...")
-
-	local tConfig = {}
-	local file = io.open("config.cfg", "r")
-	if not file then print("warn", filename.." not found"); return nil end
-
-	for line in file:lines() do
-		if (not string.match(line, "#.")) and #line > 0 then
-			local var, val = string.match(line, "[%s\t]*([_%w]+)[%s\t]*=[%s\t]*([^\n]+)")
-
-			if not ((not var) or (not val) or (#var < 1) or (#val < 1)) then
-				val = (tonumber(val) or val)
-				val = (val == "true" or val)
-				if val == "false" then val = false end 
-				tConfig[var] = val
-			end
-		end
-	end
-	file:close()
-
-	return tConfig
 end
 
 function bot.registerCommand(command)
@@ -307,9 +296,44 @@ function bot.unregisterCommand(command)
 	return true
 end
 
-function bot.callEvent(name, ...)
-	table.insert(eventQueue, {name = name, args = {...}})
-	print("warn", "callEvent function is deprecated, use queueEvent instead.")
+function bot.availableCommands()
+	local commandList = {}
+	for command, _ in pairs(commandRegestry) do
+		table.insert(commandList, command)
+	end
+	return commandList
+end
+
+function bot.getDescription(command)
+	return commandRegestry[command].description
+end
+
+function bot.getDetailedDescription(command)
+	return commandRegestry[command].detailedDescription
+end
+
+function bot.parseConfig(filename)
+	print("info", "Parsing "..filename.."...")
+
+	local tConfig = {}
+	local file = io.open("config.cfg", "r")
+	if not file then print("warn", filename.." not found"); return nil end
+
+	for line in file:lines() do
+		if (not string.match(line, "#.")) and #line > 0 then
+			local var, val = string.match(line, "[%s\t]*([_%w]+)[%s\t]*=[%s\t]*([^\n]+)")
+
+			if not ((not var) or (not val) or (#var < 1) or (#val < 1)) then
+				val = (tonumber(val) or val)
+				val = (val == "true" or val)
+				if val == "false" then val = false end 
+				tConfig[var] = val
+			end
+		end
+	end
+	file:close()
+
+	return tConfig
 end
 
 function bot.queueEvent(name, ...)
@@ -323,6 +347,10 @@ function bot.queueEvent(name, ...)
 		print(s)
 	end
 end
+
+-----------------
+--Event processor
+-----------------
 
 local function processCommand(command, ...)
 	print(...)

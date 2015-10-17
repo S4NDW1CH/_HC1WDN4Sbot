@@ -48,8 +48,9 @@ local function insert(ti, ta)
 	end
 end
 
-local function fireTimer(t)
+function fireTimer(t)
 	table.remove(activeTimers, t.id)
+	print("Firing timer "..t.id)
 	bot.queueEvent("timerTriggered", t)
 end
 

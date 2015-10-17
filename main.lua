@@ -90,7 +90,7 @@ function main()
 	loadModules()
 
 	print("info", "Connecting to Skype...")
-	local skype = luacom.CreateObject("Skype4COM.Skype", "Skype_")
+	skype = luacom.CreateObject("Skype4COM.Skype", "Skype_")
 	print("info", "Got Skype object.")
 	luacom.Connect(skype, skypeEvents)
 	skype:Attach(nil, false)

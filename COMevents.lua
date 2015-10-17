@@ -77,7 +77,9 @@ end
 
 function skypeEvents:MessageStatus(message, status)
 	print("Event: MessageStatus status="..TChatMessageStatus[status].."("..status..") message.Body="..message.Body)
-	bot.queueEvent("message"..TChatMessageStatus[status], message)
+	if ((message.fromHandle ~= skype.currentUser.Handle) and (status == 3)) or (status ~= 3) then
+		bot.queueEvent("message"..TChatMessageStatus[status], message)
+	end
 end
 
 function skypeEvents:UserMood(user, moodText)

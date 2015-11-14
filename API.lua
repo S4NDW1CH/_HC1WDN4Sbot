@@ -1,6 +1,8 @@
+--GLOBALS: bot, print
+
 --Load modules
 require "lfs"
-json = require "json"
+local json = require "json"
 
 
 --Global definitions variables and constants
@@ -38,6 +40,11 @@ local function loadModule(filename, message)
 	end
 
 	--Define module environment
+	--Each module has their own "global" environment that is similar
+	--to real "global", but with some functions or libraries removed
+	--or replaced by implementations that do not allow to view or
+	--modify either real or any other "global" environment that does
+	--not belong to module calling said functions
 	local env = {}
 
 	env._G = env
@@ -63,10 +70,7 @@ local function loadModule(filename, message)
 
 	--Sandbox compatible implementation of module()
 	env.module = function (name, ...)
-		--Closures won't work here and at the same time they might
-		--actually take effect here so to be safe environment of
-		--the module is fetched each time
-		local env = getfenv(2)
+		local env = getfenv(2)	--Closures, how do they work?
 		local module = {}		--New environment that will be applied later
 
 		--Checking if there is a table defined for module()
@@ -86,33 +90,26 @@ local function loadModule(filename, message)
 			param(module)
 		end
 
-		--Add environment variables that are supposed to be added by 
 		module._NAME = name
 		module._M = module
 
-		--Make sure require() will return environment table instead of "true"
 		env.package.loaded[name] = module
 
-		--Finally apply new environment to the thread
 		setfenv(2, module)
 	end
 
 	--Sandbox compatible implementation of require()
 	env.require = function (name)
-		--Assert and type-check argument
 		if type(name) ~= "string" then error("bad argument #1 to 'require' (string expected, got "..type(name)..")") end
 		
-		--Get environment in which library will be loaded
 		local env = getfenv(2)
 
 		print("Loading module "..name.." within "..tostring(env).." ("..(env.name or "global")..")")
 
-		--Check if library was already loaded
 		if not env.package.loaded[name] then
-			--If library wasn't loaded
 			
-			local errorMessage = "" 	--Error message that will be displayed if loading fail
-			local success = false 		--Loading success flag
+			local errorMessage = ""
+			local success = false
 
 			local loaders = package.loaders 	--Local version of loaders table because in module environment there isn't one
 			local _G = _G
@@ -125,7 +122,6 @@ local function loadModule(filename, message)
 
 			--Iterate through loaders to see which one works
 			for i = 1, 4 do
-				--Attempt to load library via one of the loaders
 				local moduleLoader = loaders[i](name)
 				
 				if type(moduleLoader) ~= "function" then
@@ -166,6 +162,8 @@ local function loadModule(filename, message)
 		loaded = {}
 	}
 
+	--Adding all loaded libraries (including standard ones)
+	--to environment of currently loading module
 	for name, lib in pairs(package.loaded) do
 		if (not (name == "_G" or name == "debug" or name == "package")) then
 			print("Adding "..name.." to loaded modules")
@@ -182,6 +180,7 @@ local function loadModule(filename, message)
 	env._M = env.filename		--These two allow writing program modules like Lua modules
 	env._NAME = env.name
 
+	--Application of built environment and initialization of current module
 	setfenv(mod, env)
 	local traceback
 	local success, msg = xpcall(mod, function (obj) traceback = debug.traceback(obj, "", 1) end)
@@ -191,6 +190,7 @@ local function loadModule(filename, message)
 		return print("error", "Error on initializing "..filename..":\n"..(msg or "")..traceback)
 	end
 
+	--Initialization callback
 	success, msg = pcall(env.onLoad)
 
 	if not success and env.onLoad then print("error", "Error handling onLoad event in module "..env.name..":\n"..(msg or "no error message available")) end
@@ -204,14 +204,16 @@ end
 function loadModules(message)
 	print("info", "Loading modules...")
 
-	--First, clear array of modules
+	--First, clear array of modules as old information is useless
+	--In context of reloading in runtime
 	modules = {len = 0}
 
-	--Also, clear command registry
+	--Also, clear command registry because module may register different
+	--commands or not load some commands at all
 	commandRegestry = {}
 
-	--Don't forget to load system commands
 	print("info", "Registering system commands.")
+	bot.registerCommand{name = "stop", func = system.stop, admin = true}
 	bot.registerCommand{name = "reload", func = system.reload, admin = true}
 	bot.registerCommand{name = "status", func = system.status}
 	bot.registerCommand{name = "about", func = system.about}
@@ -229,7 +231,6 @@ function loadModules(message)
 		end
 	end
 
-	--And now we are ready to go!
 	print("info", "All modules were loaded.")
 	if message then message.Chat:SendMessage("All modules were loaded.") end
 end
@@ -242,6 +243,10 @@ end
 ---------------
 --API functions
 ---------------
+
+function bot.stop()
+	return setShutdown()
+end
 
 function bot.isLoaded(module)
 	return modNames[module] and true or false

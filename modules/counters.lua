@@ -22,7 +22,11 @@ function onLoad()
 	bot.registerCommand{name = "deleteCounter", func = deleteCounter, admin = true}
 	bot.registerCommand{name = "counterList", func = listCounters}
 
-	currentTimer = timer.newTimer{type = "delay", time = 3600}
+	currentTimer = timer.newTimer{type = "delay", time = 60}
+
+	for _, counter in pairs(counters) do
+		counter.hourlyCount = 0
+	end
 end
 
 function newCounter(message, str)
@@ -51,6 +55,7 @@ end
 
 function messageReceived(message)
 	hourlyMessageCounter = hourlyMessageCounter + 1
+	print("Daily message counter: "..hourlyMessageCounter)
 
 	for str, counter in pairs(counters) do
 		if not counter.cooldown then counter.cooldown = 0 end
@@ -64,9 +69,9 @@ function messageReceived(message)
 			increased = true
 		end
 
-		if increased and os.time() > counter.cooldown + 120 then
+		if increased and os.time() > counter.cooldown + 600 then
 			message.chat:sendMessage(str.." count: "..counter.count..
-			"\nHourly "..str.." index: "..string.format("%.2f", counter.hourlyCount/(hourlyMessageCounter == 0 and 1 or hourlyMessageCounter)))
+			"\nDaily "..str.." index: "..string.format("%1.1f", 100 * counter.hourlyCount/(hourlyMessageCounter == 0 and 1 or hourlyMessageCounter)))
 			increased = false
 			counter.cooldown = os.time()
 		end
@@ -82,9 +87,12 @@ end
 function timerTriggered(t)
 	if t == currentTimer then
 		t:delete()
-		currentTimer = timer.newTimer{type = "delay", time = 3600}
-		for _, counter in pairs(counters) do
-			counter.hourlyCount = 0
+		currentTimer = timer.newTimer{type = "delay", time = 60}
+		if os.date("%H%M", os.time()) == "0000" then
+			hourlyMessageCounter = 0
+			for _, counter in pairs(counters) do
+				counter.hourlyCount = 0
+			end
 		end
 	end
 end

@@ -5,6 +5,10 @@ system = {}
 
 --Functions and methods
 
+function system.stop(message)
+	message.chat:sendMessage("Goodbye...")
+end
+
 function system.reload(message)
 	print("info", "Received command to reload modules. Reloading...")
 	message.Chat:SendMessage("Reloading modules, please wait...")

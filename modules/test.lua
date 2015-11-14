@@ -1,3 +1,4 @@
+--GLOBALS: onLoad, bot. bit, string, math, table, io, os, choice, ball, roll
 require "bit"
 
 function onLoad()
@@ -8,7 +9,7 @@ function onLoad()
 	bot.registerCommand{name = "r", func = roll}
 end
 
-function hash(str)
+local function hash(str)
 	local remainder
 	local hash = 0
 	if #str%2 ~= 0 then
@@ -23,7 +24,7 @@ function hash(str)
 	return bit.bxor(hash, remainder or 0)
 end
 
-function getBallResponse()
+local function getBallResponse()
 	local file = io.open(".\\modules\\ballResponses.txt", "r")
 
 	local responseList = {}
@@ -31,15 +32,10 @@ function getBallResponse()
 		table.insert(responseList, line)
 	end
 
-	math.randomseed(os.time())
-	math.random();math.random();math.random()
-
 	return responseList[math.random(#responseList)]
 end
 
-function dice(amount, sides)
-	math.randomseed(os.clock()/math.random())
-	math.random();math.random();math.random()
+local function dice(amount, sides)
 
 	local result = {}
 	for d = 1, amount do
@@ -58,8 +54,6 @@ function choice(message, args)
 	for option in args:gmatch(",?%s*([^%,%.\n\t%z]*),?") do
 		table.insert(options, option)
 	end
-	math.randomseed(os.clock()/math.random())
-	math.random();math.random();math.random()
 
 	--This construct here needed because sometimes choice
 	--ends up being zero-length string and I have absolutely
@@ -73,9 +67,6 @@ function choice(message, args)
 end
 
 function ball(message, question)
-	math.randomseed(os.clock()/math.random())
-	math.random();math.random();math.random()
-
 	message.Chat:SendMessage(getBallResponse(hash(question)))
 end
 

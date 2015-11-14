@@ -23,9 +23,6 @@ function selectGame(message, profile)
 		games = json.decode(games)
 		assert(games, "Could not process JSON data")
 
-		math.randomseed(os.clock()/math.random())
-		math.random();math.random();math.random()
-
 		message.chat:sendMessage("How about you play "..games.response.games[math.random(#games.response.games)].name..", "..message.fromDisplayName.."?")
 	end
 end

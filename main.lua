@@ -1,3 +1,5 @@
+--GLOBALS: skype, print, string, table, os luacom, loadModules, tostring, ipairs, 
+
 --Where to look up modules
 package.cpath = ".\\?.dll;.\\lib\\?.dll"
 package.path = ".\\?.lua;.\\lua\\?.lua"
@@ -17,9 +19,9 @@ require "timer"
 
 
 --Global definitions variables and constants
-rawPrint = print
+local rawPrint = print
 
-config = bot.parseConfig("config.cfg")
+local config = bot.parseConfig("config.cfg")
 if not config then
 	 local file = io.open("config.cfg", "w")
 
@@ -53,11 +55,18 @@ tickrate = 10
 	config = bot.parseConfig("config.cfg")
 end
 
-logConsole = logging.console("%date\t[%level] %message\n")
+local logConsole = logging.console("%date\t[%level] %message\n")
+local logFile
 if config.use_logs then logFile = logging.file("bot.log", "%Y-%m-%d-%H%M%S", "%date [%level] %message\n") end
+
+local shutdown = false
 
 
 --Functions and methods
+
+function setShutdown()
+	shutdown = true
+end
 
 function print(level, ...)
 	if level == "info" or level == "warn" or level == "error" or level == "fatal" then
@@ -83,9 +92,12 @@ end
 
 
 --Main chunk
-function main()
+local function main()
 	logConsole:setLevel(config.debug and "DEBUG" or "INFO")
 	if config.use_logs then logFile:setLevel(config.debug and "DEBUG" or "INFO") end
+
+	math.randomseed(os.clock())
+	math.random();math.random()
 
 	loadModules()
 
@@ -99,10 +111,16 @@ function main()
 	
 	print("info", "Main loop is running.")
 	--luacom.StartMessageLoop(function() end)
+	local resolveTimers = resolveTimers
+	local resolveEvents = resolveEvents
+
+	--StartMessageLoop() is not used because it does not work as I
+	--need. Instead to receive COM events Attach() method is used.
 	while true do
 		resolveTimers()
 		skype:Attach(nil, false)
 		resolveEvents()
+		if shutdown then break end
 		sleep(1/(config.tickrate or 10))
 	end
 	print("info", "Shutting down...")

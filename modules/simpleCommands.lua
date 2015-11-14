@@ -1,7 +1,8 @@
+--GLOBALS: onLoad. messageReceived, lfs, json, bot, string, print, io, pairs, name
 require "json"
 require "lfs"
 
-registeredCommands = {}
+local registeredCommands = {}
 
 function onLoad()
 	lfs.mkdir(".\\modules\\"..name)
@@ -53,7 +54,7 @@ end
 
 function deleteCommand(message, command)
 	local success = bot.unregisterCommand(command)
-	if not succes then
+	if not success then
 		message.chat.sendMessage("Could not delete "..command..".")
 	end
 

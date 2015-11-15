@@ -1,4 +1,4 @@
---GLOBALS: skype, print, string, table, os luacom, loadModules, tostring, ipairs, 
+--GLOBALS: skype, print, string, table, os luacom, loadModules, tostring, ipairs, config
 
 --Where to look up modules
 package.cpath = ".\\?.dll;.\\lib\\?.dll"
@@ -21,7 +21,7 @@ require "timer"
 --Global definitions variables and constants
 local rawPrint = print
 
-local config = bot.parseConfig("config.cfg")
+config = bot.parseConfig("config.cfg")
 if not config then
 	 local file = io.open("config.cfg", "w")
 

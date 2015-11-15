@@ -1,4 +1,4 @@
---GLOBALS: bot, print
+--GLOBALS: bot, print, system
 
 --Load modules
 require "lfs"

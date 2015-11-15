@@ -15,6 +15,7 @@ local function getBallResponse()
 	for line in file:lines() do
 		table.insert(responseList, line)
 	end
+	file:close()
 
 	return responseList[math.random(#responseList)]
 end
@@ -31,7 +32,7 @@ end
 
 function choice(message, args)
 	if not args then
-		return message.Chat:SendMessage("I CHOSE NOTHING!")
+		return message.Chat:SendMessage("I have no choice!")
 	end
 
 	local options = {} 

@@ -1,3 +1,4 @@
+--GLOBALS: system
 --Global definitions variables and constants
 
 system = {}

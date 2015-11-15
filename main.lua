@@ -1,4 +1,6 @@
---GLOBALS: skype, print, string, table, os luacom, loadModules, tostring, ipairs, config
+--GLOBALS: skype, print, string, table, os, luacom, loadModules
+--GLOBALS: tostring, ipairs, config, setShutdown, math, debug, skypeEvents
+--GLOBALS: resolveTimers, resolveEvents
 
 --Where to look up modules
 package.cpath = ".\\?.dll;.\\lib\\?.dll"

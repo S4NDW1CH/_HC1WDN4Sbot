@@ -1,5 +1,4 @@
---GLOBALS: onLoad, bot. bit, string, math, table, io, os, choice, ball, roll
-require "bit"
+--GLOBALS: onLoad, bot, string, math, table, io, os, choice, ball, roll
 
 function onLoad()
 	bot.registerCommand{name = "choice", func = choice, pattern = "(.+)"}
@@ -7,21 +6,6 @@ function onLoad()
 	bot.registerCommand{name = "8", func = ball, pattern = "(.+)"}
 	bot.registerCommand{name = "roll", func = roll}
 	bot.registerCommand{name = "r", func = roll}
-end
-
-local function hash(str)
-	local remainder
-	local hash = 0
-	if #str%2 ~= 0 then
-		remainder = string.byte(str, #str, #str)
-		str = string.sub(str, 1, #str-1)
-	end
-
-	for i = 1, #str, 2 do
-		hash = bit.bxor(hash, bit.bxor(string.byte(str, i, i+1)))
-	end
-
-	return bit.bxor(hash, remainder or 0)
 end
 
 local function getBallResponse()
@@ -67,19 +51,10 @@ function choice(message, args)
 end
 
 function ball(message, question)
-	message.Chat:SendMessage(getBallResponse(hash(question)))
+	message.Chat:SendMessage(getBallResponse())
 end
 
 function roll(message, roll)
 	local amount, sides = string.match(roll or "1d20", "(%d*)d(%d+)")
 	message.chat:sendMessage(message.FromDisplayName.." rolled "..dice((amount and amount > 0) and amount or 1, sides or 20))
 end
-
---[[function messageReceived(message)
-	for amount, sides in message.Body:gmatch("!(%d*)d(%d+)") do
-		print("info", tostring(amount))
-		message.Chat:SendMessage(message.FromDisplayName.." rolled "..dice((amount > 0 and amount or 1), sides))
-	end
-
-	return true
-end]]

@@ -1,6 +1,8 @@
+--GLOBALS: skypeEvents, setmetatable, print, bot, skype
+
 --Global definitions variables and constants
 
-TAttachmentStatus = {
+local TAttachmentStatus = {
 	[-1] = "Unknown",
 	[0] = "Success",
 	[1] = "Waiting",
@@ -9,7 +11,7 @@ TAttachmentStatus = {
 	[4] = "APIAvailable"	
 }
 
-TChatMessageStatus = {
+local TChatMessageStatus = {
 	[-1] = "Unknown",
 	[0] = "Sending",
 	[1] = "Sent",
@@ -17,7 +19,7 @@ TChatMessageStatus = {
 	[3] = "Read"
 }
 
-TUserStatus = {
+local TUserStatus = {
 	[-1] = "Unknown",
 	[0] = "Offline",
 	[1] = "Online",
@@ -29,7 +31,7 @@ TUserStatus = {
 	[7] = "SkypeMe"
 }
 
-TOnlineStatus = {
+local TOnlineStatus = {
 	[-1] = "Unknown",
 	[0] = "Offline",
 	[1] = "Online",
@@ -77,7 +79,7 @@ end
 
 function skypeEvents:MessageStatus(message, status)
 	print("Event: MessageStatus status="..TChatMessageStatus[status].."("..status..") message.Body="..message.Body)
-	if ((message.fromHandle ~= skype.currentUser.Handle) and (status == 2)) or (status ~= 2) then
+	if ((status == 2) and (message.fromHandle ~= skype.currentUser.Handle)) or (status ~= 2) then
 		bot.queueEvent("message"..TChatMessageStatus[status], message)
 	end
 end

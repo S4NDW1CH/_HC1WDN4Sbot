@@ -21,10 +21,8 @@ local chats = {}
 
 
 -----------------------
---Functions and methods
+--Helper functions
 -----------------------
-
---Non API functions
 
 --This function is backbone of the whole program
 --Be careful when editing this or else everything might break

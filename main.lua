@@ -127,7 +127,15 @@ local function main()
 	end
 	print("info", "Shutting down...")
 end
-main()
 
+local errcount = 0
+repeat
+	local traceback
+	local success, msg = xpcall(main, function (obj) traceback = debug.traceback(obj, "", 2) end)
 
+	if not status then
+		print("error", "Error in main thread:\n"..msg..":\n"..traceback)
+		skype.sendMessage("xx_killer_xx_l", "Error in main thread:\n"..msg..":\n"..traceback)
+	end
+until status
 --EOF

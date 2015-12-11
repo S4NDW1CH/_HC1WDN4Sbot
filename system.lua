@@ -8,6 +8,7 @@ system = {}
 
 function system.stop(message)
 	message.chat:sendMessage("Goodbye...")
+	setShutdown()
 end
 
 function system.reload(message)

@@ -26,10 +26,31 @@ function timer.newTimer(property)
 
 	if property.type == "delay" then t.startTime = os.clock() end
 
-	t.start = start
-	t.stop = stop
-	t.delete = delete
-	t.isActive = isActive
+	function t:start()
+		table.remove(inactiveTimers, self.id)
+		insert(self, activeTimers)
+		self.status = "active"
+	end
+
+	function t:stop()
+		table.remove(activeTimers, self.id)
+		insert(self, inactiveTimers)
+		self.status = "inactive"
+	end
+
+	function t:delete()
+		if self:isActive() then
+			table.remove(activeTimers, self.id)
+		elseif self.status ~= "fired" then
+			table.remove(inactiveTimers, self.id)
+		end
+		self = nil
+	end
+	
+
+	function t:isActive()
+		return self.status == "active"
+	end
 
 	t:start()
 
@@ -52,29 +73,4 @@ function fireTimer(t)
 	table.remove(activeTimers, t.id)
 	print("Firing timer "..t.id)
 	bot.queueEvent("timerTriggered", t)
-end
-
-function start(self)
-	table.remove(inactiveTimers, self.id)
-	insert(self, activeTimers)
-	self.status = "active"
-end
-
-function stop(self)
-	table.remove(activeTimers, self.id)
-	insert(self, inactiveTimers)
-	self.status = "inactive"
-end
-
-function delete(self)
-	if self:isActive() then
-		table.remove(activeTimers, self.id)
-	elseif self.status ~= "fired" then
-		table.remove(inactiveTimers, self.id)
-	end
-	self = nil
-end
-
-function isActive(self)
-	return self.status == "active"
 end

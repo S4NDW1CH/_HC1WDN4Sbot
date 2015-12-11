@@ -110,7 +110,7 @@ local function main()
 	skype:Attach(nil, false)
 	print("info", "Attached to Skype.")
 	print("info", "Current user: "..skype.CurrentUser.FullName.." ("..skype.CurrentUser.Handle..").")
-	
+
 	print("info", "Main loop is running.")
 	--luacom.StartMessageLoop(function() end)
 	local resolveTimers = resolveTimers

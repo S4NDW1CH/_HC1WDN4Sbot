@@ -2,6 +2,7 @@ require "json"
 require "lfs"
 
 local counters = {}
+local globalCounterCooldown = 0
 local hourlyMessageCounter = 0
 local currentTimer
 
@@ -60,6 +61,7 @@ function messageReceived(message)
 	for str, counter in pairs(counters) do
 		if not counter.cooldown then counter.cooldown = 0 end
 		if not counter.hourlyCount then counter.hourlyCount = 0 end
+		if not counter.messageCooldown then counter.messageCooldown = 0 end
 		
 		strEscaped = str:gsub("([%%%.%*%(%)%^%$%+%-%[%]])", "%%%0")
 		local increased = false
@@ -69,12 +71,21 @@ function messageReceived(message)
 			increased = true
 		end
 
-		if increased and os.time() > counter.cooldown + 600 then
+		if  increased
+			and os.time() > counter.cooldown + 600 
+			and counter.messageCooldown <= 0
+			and globalCounterCooldown <= 0
+		then
 			message.chat:sendMessage(str.." count: "..counter.count..
 			"\nDaily "..str.." index: "..string.format("%1.1f", 100 * counter.hourlyCount/(hourlyMessageCounter == 0 and 1 or hourlyMessageCounter)))
 			increased = false
 			counter.cooldown = os.time()
+			counter.messageCooldown = 10
+			globalCounterCooldown = 10
 		end
+
+		counter.messageCooldown = counter.messageCooldown - 1
+		globalCounterCooldown = globalCounterCooldown - 1
 	end
 
 	local file = io.open(".\\modules\\"..name.."\\counters.json", "w+")

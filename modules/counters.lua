@@ -20,8 +20,11 @@ function onLoad()
 
 	bot.registerCommand{name = "counter", func = newCounter, admin = true}
 	bot.registerCommand{name = "count", func = newCounter, admin = true}
+	bot.registerCommand{name = "c", func = newCounter, admin = true}
 	bot.registerCommand{name = "deleteCounter", func = deleteCounter, admin = true}
-	bot.registerCommand{name = "counterList", func = listCounters}
+	bot.registerCommand{name = "dc", func = deleteCounter, admin = true}
+	bot.registerCommand{name = "listCounters", func = listCounters}
+	bot.registerCommand{name = "lc", func = listCounters}
 
 	currentTimer = timer.newTimer{type = "delay", time = 60}
 
@@ -72,9 +75,9 @@ function messageReceived(message)
 		end
 
 		if  increased
-			and os.time() > counter.cooldown + 600 
-			and counter.messageCooldown <= 0
-			and globalCounterCooldown <= 0
+			and (os.time() > counter.cooldown + 600)
+			and (counter.messageCooldown <= 0)
+			and (globalCounterCooldown <= 0)
 		then
 			message.chat:sendMessage(str.." count: "..counter.count..
 			"\nDaily "..str.." index: "..string.format("%1.1f", 100 * counter.hourlyCount/(hourlyMessageCounter == 0 and 1 or hourlyMessageCounter)))

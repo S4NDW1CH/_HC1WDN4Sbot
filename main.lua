@@ -95,13 +95,11 @@ end
 
 --Main chunk
 local function main()
-	logConsole:setLevel(config.debug and "DEBUG" or "INFO")
-	if config.use_logs then logFile:setLevel(config.debug and "DEBUG" or "INFO") end
-
 	math.randomseed(os.clock())
 	math.random();math.random()
-
-	loadModules()
+	
+	logConsole:setLevel(config.debug and "DEBUG" or "INFO")
+	if config.use_logs then logFile:setLevel(config.debug and "DEBUG" or "INFO") end
 
 	print("info", "Connecting to Skype...")
 	skype = luacom.CreateObject("Skype4COM.Skype", "Skype_")
@@ -110,6 +108,10 @@ local function main()
 	skype:Attach(nil, false)
 	print("info", "Attached to Skype.")
 	print("info", "Current user: "..skype.CurrentUser.FullName.." ("..skype.CurrentUser.Handle..").")
+
+	loadTimers()
+
+	loadModules()
 
 	print("info", "Main loop is running.")
 	--luacom.StartMessageLoop(function() end)

@@ -9,7 +9,7 @@ local json = require "json"
 
 bot = {} --Namespace
 
-bot.version = "0.9"
+bot.version = "0.10"
 
 local modules = {}
 local modNames = {}

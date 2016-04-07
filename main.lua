@@ -16,6 +16,7 @@ require "logging.file"
 
 require "COMevents"
 require "API"
+require "API_extender"
 require "system"
 require "timer"
 
@@ -49,6 +50,9 @@ use_logs = true
 
 #Rate at which program updates (event and timer processing). Measured in ticks per second. (default: 10)
 tickrate = 10
+
+#Skype username to which send crash reports if main thread crashes.
+admin = 
 ]]
 
 	file:write(content)
@@ -137,7 +141,7 @@ repeat
 
 	if not success then
 		print("error", "Error in main thread:\n"..(msg or "???")..":\n"..traceback)
-		skype.sendMessage("xx_killer_xx_l", "Error in main thread:\n"..msg..":\n"..traceback)
+		if config.admin then skype.sendMessage(config.admin, "Error in main thread:\n"..msg..":\n"..traceback) end
 	end
 until success
 --EOF

@@ -17,7 +17,7 @@ local commandRegestry = {}
 
 local eventQueue = {}
 
-local chats = {}
+bot.chats = {}
 
 
 -----------------------
@@ -173,8 +173,8 @@ local function loadModule(filename, message)
 	env.bot = bot
 	env.timer = timer
 
-	env.filename = string.match(filename, ".\\([%w%s_%.#]*%.lua)")
-	env.name = string.match(filename, ".\\([%w%s_%.#]*)%.lua")
+	env.filename = string.match(filename, "./([%w%s_%.#]*%.lua)")
+	env.name = string.match(filename, "./([%w%s_%.#]*)%.lua")
 	env._M = env.filename		--These two allow writing program modules like Lua modules
 	env._NAME = env.name
 
@@ -223,9 +223,9 @@ function loadModules(message)
 
 	--Next, iterate through all .lua files in \modules directory and load each file
 	lfs.mkdir("modules")
-	for filename in lfs.dir(".\\modules\\") do
+	for filename in lfs.dir("./modules/") do
 		if string.match(filename, "[_%-%w%s]*%.lua$") then
-			loadModule(".\\modules\\"..filename, message)
+			loadModule("./modules/"..filename, message)
 		end
 	end
 
@@ -238,6 +238,21 @@ function toggleModule(module)
 	return modules[modNames[module]].enabled
 end
 
+function loadChatEnvironments()
+	local file = io.open("./chats.json", "r")
+
+	if file then
+		bot.chats = json.decode(file:read("*a"))
+	end
+end
+
+local function saveChatEnvironments()
+	local file = io.open("./chats.json", "w")
+
+	file:write(json.encode(bot.chats))
+	file:close()
+end
+
 ---------------
 --API functions
 ---------------
@@ -247,7 +262,7 @@ function bot.stop()
 end
 
 function bot.isLoaded(module)
-	return modNames[module] and true or false
+	return not not modNames[module]
 end
 
 function bot.loadedModules()
@@ -261,19 +276,19 @@ end
 
 function bot.registerCommand(command)
 	if not command.name then 
-		return false, print("error", "Error registering command: name not specified (name = "..tostring(command.name)..").") 
+		return false, print("error", "Error registering command "..command..": name not specified (name = "..tostring(command.name)..").") 
 	end
 	if not command.func then 
-		return false, print("error", "Error registering command: no function specified.")
+		return false, print("error", "Error registering command "..command..": no function specified.")
 	end
 
 	local env = getfenv(command.func)
 	if (not env.name) and (env ~= _G) then 
-		return false, print("error", "Error registering command: module metadata not found (env.name is"..env.name..").") 
+		return false, print("error", "Error registering command "..command..": module metadata not found (env.name is "..(env.name or "nil")..").") 
 	end
 
 	if commandRegestry[command.name] and (commandRegestry[command.name].owner ~= (env == _G and "system" or env.name)) then
-		return false, print("error", "Error registering command: command already registered by another module (owner = "..commandRegestry[command.name].owner..").")
+		return false, print("error", "Error registering command "..command..": command already registered by another module (owner = "..commandRegestry[command.name].owner..").")
 	end
 
 	print("info", "Registering command "..command.name..".")
@@ -316,10 +331,11 @@ function bot.getDetailedDescription(command)
 end
 
 function bot.parseConfig(filename)
-	print("info", "Parsing "..filename.."...")
+	--print("info", "Parsing "..filename.."...")
+	--I should figure out a proper loading order
 
 	local tConfig = {}
-	local file = io.open("config.cfg", "r")
+	local file = io.open(filename, "r")
 	if not file then print("warn", filename.." not found"); return nil end
 
 	for line in file:lines() do
@@ -355,6 +371,10 @@ end
 --Event processor
 -----------------
 
+--So here's a funny story: code of this function originally was in the
+--mess of nested ifs bellow, but when executed, it would abort before
+--executing command itself for no reason whatsoever. Had a lot of "fun"
+--debugging this.
 local function processCommand(command, ...)
 	print(...)
 	local message = ...
@@ -375,24 +395,25 @@ function resolveEvents()
 	print("Parsing event "..e)
 	
 	if e == "messageReceived" then
-		for _, command, commandArgs in string.gmatch(args[1].Body, "(!)([^\n\t%z%s!]+)[\t\n%z%s]*([^!%z]*)") do
+		for _, command, commandArgs in string.gmatch(args[2].Body, "(!)([^\n\t%z%s!]+)[\t\n%z%s]*([^!%z]*)") do
 
 			print("Captured a command.", "command="..command, "commandArgs="..commandArgs)
 			if commandRegestry[command] then
 				if commandRegestry[command].admin then
-					for i = 1, args[1].Chat.MemberObjects.Count do
-						if args[1].Chat.MemberObjects:Item(i).Handle == args[1].FromHandle then
-							if ((args[1].Chat.MemberObjects:Item(i).Role <= 2) and (args[1].Chat.MemberObjects:Item(i).Role >= 0)) or (args[1].FromHandle == "xx_killer_xx_l") then
-								processCommand(command, args[1], string.match(commandArgs, commandRegestry[command].pattern or "(.*)"))
-								print("info", "User "..args[1].FromHandle.." executed administrative command "..command..".")
+					--Is there a more efficient way to find role of user in chat?
+					for i = 1, args[2].Chat.MemberObjects.Count do
+						if args[2].Chat.MemberObjects:Item(i).Handle == args[2].FromHandle then
+							if ((args[2].Chat.MemberObjects:Item(i).Role <= 2) and (args[2].Chat.MemberObjects:Item(i).Role >= 0)) or (args[2].FromHandle == config.admin) then
+								processCommand(command, args[2], args[1], string.match(commandArgs, commandRegestry[command].pattern or "(.*)"))
+								print("info", "User "..args[2].FromHandle.." executed administrative command "..command..".")
 							else
-								print("info", "User "..args[1].FromHandle.." does not have enough privileges to execute "..command..".")
+								print("info", "User "..args[2].FromHandle.." does not have enough privileges to execute "..command..".")
 							end
 						end
 					end
 				else
-					processCommand(command, args[1], string.match(commandArgs, commandRegestry[command].pattern or "(.*)"))
-					print("info", "User "..args[1].FromHandle.." executed "..command..".")
+					processCommand(command, args[2], args[1], string.match(commandArgs, commandRegestry[command].pattern or "(.*)"))
+					print("info", "User "..args[2].FromHandle.." executed "..command..".")
 				end				
 			end
 		end
@@ -405,6 +426,8 @@ function resolveEvents()
 			if not succes and mod[e] then print("error", "Error while calling event handler "..e.." in module "..mod.name..": "..msg) end
 		end
 	end
+
+	saveChatEnvironments()
 end
 
 --EOF

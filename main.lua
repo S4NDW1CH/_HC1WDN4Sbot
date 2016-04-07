@@ -3,8 +3,8 @@
 --GLOBALS: resolveTimers, resolveEvents
 
 --Where to look up modules
-package.cpath = ".\\?.dll;.\\lib\\?.dll"
-package.path = ".\\?.lua;.\\lua\\?.lua"
+package.cpath = "./?.dll;./lib/?.dll"
+package.path = "./?.lua;./lua/?.lua"
 
 --Load modules
 require "compat53.init"
@@ -16,7 +16,7 @@ require "logging.file"
 
 require "COMevents"
 require "API"
-require "API_extender"
+-- require "API_extender"
 require "system"
 require "timer"
 
@@ -113,6 +113,7 @@ local function main()
 	print("info", "Attached to Skype.")
 	print("info", "Current user: "..skype.CurrentUser.FullName.." ("..skype.CurrentUser.Handle..").")
 
+	loadChatEnvironments()
 	--loadTimers()
 
 	loadModules()

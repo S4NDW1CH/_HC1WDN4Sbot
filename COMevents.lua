@@ -46,7 +46,7 @@ skypeEvents = {}
 
 
 --Functions and methods
-setmetatable(skypeEvents, {__index = function(_, key) print("Unhandled event: "..key) end})
+setmetatable(skypeEvents, {__index = function(_, key) print("warn", "Unhandled event: "..key) end})
 
 function skypeEvents:Reply(command)
 	--print("Got a reply to "..(command.Blocking and "" or "non-").."blocking command "..command.Command.."["..command.Id.."] :"..command.Reply.." (expected "..command.Expected..")")
@@ -62,7 +62,7 @@ function skypeEvents:Error(command, code, descr)
 end
 
 function skypeEvents:AttachmentStatus(status)
-	bot.queueEvent("attachment"..TAttachmentStatus[status])
+	--bot.queueEvent("attachment"..TAttachmentStatus[status])
 end
 
 function skypeEvents:UserStatus(status)
@@ -78,9 +78,16 @@ function skypeEvents:CallStatus(call, status)
 end
 
 function skypeEvents:MessageStatus(message, status)
+	if not bot.chats[message.chat.blob] then
+		bot.chats[message.chat.blob] = {}
+	end
 	print("Event: MessageStatus status="..TChatMessageStatus[status].."("..status..") message.Body="..message.Body)
 	if ((status == 2) and (message.fromHandle ~= skype.currentUser.Handle)) or (status ~= 2) then
-		bot.queueEvent("message"..TChatMessageStatus[status], message)
+		local f = io.open("./messagelogs/"..message.chat.blob..".csv", "w")
+		f:write(message.fromHandle.."\t"..message.fromDisplayName.."\t"..
+			message.timestamp.."\t"..message.body.."\n")
+		f:close()
+		bot.queueEvent("message"..TChatMessageStatus[status], bot.chats[message.chat.blob], message)
 	end
 end
 

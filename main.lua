@@ -24,6 +24,8 @@ require "timer"
 --Global definitions variables and constants
 local rawPrint = print
 
+local tickdt
+
 config = bot.parseConfig("config.cfg")
 if not config then
 	 local file = io.open("config.cfg", "w")
@@ -96,6 +98,10 @@ local function sleep(t)
 	end
 end
 
+function getTickdt()
+	return tickdt
+end
+
 
 --Main chunk
 local function main()
@@ -125,12 +131,15 @@ local function main()
 
 	--StartMessageLoop() is not used because it does not work as I
 	--need. Instead to receive COM events Attach() method is used.
+	local t
 	while true do
+		t = os.clock()
 		resolveTimers()
 		skype:Attach(nil, false)
 		resolveEvents()
 		if shutdown then break end
 		sleep(1/(config.tickrate or 10))
+		tickdt = os.clock() - t
 	end
 	print("info", "Shutting down...")
 end

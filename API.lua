@@ -331,6 +331,10 @@ function bot.getDetailedDescription(command)
 	return commandRegestry[command].detailedDescription
 end
 
+function bot.getTickdt()
+	return getTickdt()
+end
+
 function bot.parseConfig(filename)
 	--print("info", "Parsing "..filename.."...")
 	--I should figure out a proper loading order

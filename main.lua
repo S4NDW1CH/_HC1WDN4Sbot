@@ -142,7 +142,7 @@ repeat
 
 	if not success then
 		print("error", "Error in main thread:\n"..(msg or "???")..":\n"..traceback)
-		if config.admin then skype.sendMessage(config.admin, "Error in main thread:\n"..msg..":\n"..traceback) end
+		if config.admin then skype.sendMessage(config.admin, "Error in main thread:\n"..(msg or "???")..":\n"..traceback) end
 	end
 until success
 --EOF

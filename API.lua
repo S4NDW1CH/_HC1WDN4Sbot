@@ -239,7 +239,7 @@ function toggleModule(module)
 end
 
 function loadChatEnvironments()
-	local file = io.open("./chats.json", "r")
+	local file = io.open("./data/chats.json", "r")
 
 	if file then
 		bot.chats = json.decode(file:read("*a"))
@@ -247,7 +247,8 @@ function loadChatEnvironments()
 end
 
 local function saveChatEnvironments()
-	local file = io.open("./chats.json", "w")
+	lfs.mkdir("data")
+	local file = io.open("./data/chats.json", "w")
 
 	file:write(json.encode(bot.chats))
 	file:close()
@@ -276,19 +277,19 @@ end
 
 function bot.registerCommand(command)
 	if not command.name then 
-		return false, print("error", "Error registering command "..command..": name not specified (name = "..tostring(command.name)..").") 
+		return false, print("error", "Error registering command "..command.name..": name not specified (name = "..tostring(command.name)..").") 
 	end
 	if not command.func then 
-		return false, print("error", "Error registering command "..command..": no function specified.")
+		return false, print("error", "Error registering command "..command.name..": no function specified.")
 	end
 
 	local env = getfenv(command.func)
 	if (not env.name) and (env ~= _G) then 
-		return false, print("error", "Error registering command "..command..": module metadata not found (env.name is "..(env.name or "nil")..").") 
+		return false, print("error", "Error registering command "..command.name..": module metadata not found (env.name is "..(env.name or "nil")..").") 
 	end
 
 	if commandRegestry[command.name] and (commandRegestry[command.name].owner ~= (env == _G and "system" or env.name)) then
-		return false, print("error", "Error registering command "..command..": command already registered by another module (owner = "..commandRegestry[command.name].owner..").")
+		return false, print("error", "Error registering command "..command.name..": command already registered by another module (owner = "..commandRegestry[command.name].owner..").")
 	end
 
 	print("info", "Registering command "..command.name..".")

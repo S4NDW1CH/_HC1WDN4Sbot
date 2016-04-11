@@ -40,7 +40,11 @@ end
 function system.status(message)
 	print("info", "Received status command.")
 
-	message.Chat:SendMessage("Current statistics:\n".."  Current version: "..bot.version.."\n  Number of modules loaded: "..bot.loadedModules().len.."\n  Uptime: "..string.format("%d day(s) %.2d:%.2d:%.2d", os.clock()/(60*60*24), (os.clock()/(60*60))%24, os.clock()/60%60, os.clock()%60))
+	message.Chat:SendMessage("Current statistics:\n"..
+							 "  Current version: "..bot.versionPrefix.." "..bot.version.." "..bot.versionPostfix..
+						   "\n  Number of modules loaded: "..bot.loadedModules().len..
+						   "\n  Current TPS: "..1/bot.getTickdt()..
+						   "\n  Uptime: "..string.format("%d day(s) %.2d:%.2d:%.2d", os.clock()/(60*60*24), (os.clock()/(60*60))%24, os.clock()/60%60, os.clock()%60))
 end
 
 function system.about(message)

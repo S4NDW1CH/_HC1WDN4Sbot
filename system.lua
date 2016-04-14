@@ -6,19 +6,19 @@ system = {}
 
 --Functions and methods
 
-function system.stop(message)
+function system.stop(chat, message)
 	message.chat:sendMessage("Goodbye...")
 	setShutdown()
 end
 
-function system.reload(message)
+function system.reload(chat, message)
 	print("info", "Received command to reload modules. Reloading...")
 	message.Chat:SendMessage("Reloading modules, please wait...")
 
 	loadModules(message)
 end
 
-function system.loadedModules(message)
+function system.loadedModules(chat, message)
 	local t = bot.loadedModules()
 	local s = "Current modules:"
 
@@ -29,7 +29,7 @@ function system.loadedModules(message)
 	message.chat:sendMessage(s)
 end
 
-function system.disableModule(message, name)
+function system.disableModule(chat, message, name)
 	if bot.isLoaded(name) then
 		message.chat:sendMessage("Module "..name.." is now "..(toggleModule(name) and "enabled." or "disabled."))
 	else
@@ -37,17 +37,17 @@ function system.disableModule(message, name)
 	end
 end
 
-function system.status(message)
+function system.status(chat, message)
 	print("info", "Received status command.")
 
 	message.Chat:SendMessage("Current statistics:\n"..
 							 "  Current version: "..bot.versionPrefix.." "..bot.version.." "..bot.versionPostfix..
 						   "\n  Number of modules loaded: "..bot.loadedModules().len..
-						   "\n  Current TPS: "..1/bot.getTickdt()..
+						   "\n  Current TPS: "..string.format("%1.1f",1/bot.getTickdt())..
 						   "\n  Uptime: "..string.format("%d day(s) %.2d:%.2d:%.2d", os.clock()/(60*60*24), (os.clock()/(60*60))%24, os.clock()/60%60, os.clock()%60))
 end
 
-function system.about(message)
+function system.about(chat, message)
 	print("info", "Received about command.")
 
 	message.Chat:SendMessage(
@@ -57,7 +57,7 @@ function system.about(message)
   Current version: ]]..bot.version)
 end
 
-function system.help(message, help)
+function system.help(chat, message, help)
 	local commands = bot.availableCommands()
 	local pageNo = tonumber(help)
 	if pageNo then

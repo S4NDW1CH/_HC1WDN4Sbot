@@ -19,11 +19,12 @@ local function initChatEnv(chat)
 	chat.counters = {}
 	chat._cMeta = {
 		dailyMessageCounter = 0,
-		chatCooldownMessages = 0
+		chatCooldownMessages = 0,
+		lastReset = 0
 	}
 end
 
-function newCounter(message, chat, str)
+function newCounter(chat, message, str)
 	if not str or #str < 1 then
 		return message.chat:sendMessage("Must specify what to count.")
 	end
@@ -33,13 +34,12 @@ function newCounter(message, chat, str)
 		dailyCount = 0, 
 		cooldownTimer = 0, 
 		countdownMessages = 0,
-		lastReset = 0
 	}
 
 	message.chat:sendMessage("Counter has been created.")
 end
 
-function setCount(message, chat, counter, count)
+function setCount(chat, message, counter, count)
 	if not chat.counters[counter or ""] then
 		return message.chat:sendMessage("Invalid counter specified.")
 	end
@@ -48,7 +48,7 @@ function setCount(message, chat, counter, count)
 	message.chat:sendMessage(counter.." count is now set to "..count)
 end
 
-function deleteCounter(message, chat, counter)
+function deleteCounter(chat, message, counter)
 	if not chat.counters[counter or ""] then
 		return message.chat:sendMessage("Invalid counter specified.")
 	end
@@ -56,7 +56,7 @@ function deleteCounter(message, chat, counter)
 	message.chat:sendMessage("Counter has been deleted.")
 end
 
-function listCounters(message, chat)
+function listCounters(chat, message)
 	local list = ""
 	for name, counter in pairs(chat.counters) do
 		list = list.."\n"..name.." : "..counter.count
@@ -66,7 +66,7 @@ end
 
 
 
-function messageReceived(message, chat)
+function messageReceived(chat, message)
 	if not chat._cMeta then initChatEnv(chat) end
 
 	if chat._cMeta.lastReset <= lastMidnight then
@@ -91,21 +91,23 @@ function messageReceived(message, chat)
 		end
 
 		if  increased
-			and (os.time() > counter.cooldown + 600)
+			and (os.time() > counter.cooldownTimer + 600)
 			and (counter.messageCooldown <= 0)
-			and (chat.chatCooldownMessages <= 0)
+			and (chat._cMeta.chatCooldownMessages <= 0)
 		then
+			--How do format code pls answer fast
 			message.chat:sendMessage(str.." count: "..counter.count..
-			"\nDaily "..str.." index: "..string.format("%1.1f", 100 * counter.dailyCount/(chat._cMeta.dailyMessageCounter == 0 and 1 or chat._cMeta.dailyMessageCounter)))
-			increased = false
+			"\nDaily "..str.." index: "..
+			string.format("%1.1f", 100 * counter.dailyCount/(chat._cMeta.dailyMessageCounter == 0 and 1 or chat._cMeta.dailyMessageCounter)))
+			
 			counter.cooldown = os.time()
-			counter.messageCooldown = 10
-			chat.chatCooldownMessages = 10
+			counter.messageCooldown = 11
+			chat._cMeta.chatCooldownMessages = 11
 		end
 
 		counter.messageCooldown = counter.messageCooldown - 1
-		chat.chatCooldownMessages = chat.chatCooldownMessages - 1
 	end
+	chat._cMeta.chatCooldownMessages = chat._cMeta.chatCooldownMessages - 1
 end
 
 function timerTriggered(t)

@@ -30,12 +30,12 @@ bot.chats = {}
 --Be careful when editing this or else everything might break
 local function loadModule(filename, message)
 	print("info", "Loading "..filename)
-	if message then message.Chat:SendMessage("Loading "..filename) end
+	if message then message.chat:sendMessage("Loading "..filename) end
 
 	--Load module file and check if it was done successfully
 	local mod, err = loadfile(filename)
 	if not mod then
-		if message then message.Chat:SendMessage("Error loading module "..filename..":\n"..err) end
+		if message then message.chat:sendMessage("Error loading module "..filename..":\n"..err) end
 		return print("error", "Error loading module "..filename..":\n"..err)
 	end
 
@@ -186,7 +186,7 @@ local function loadModule(filename, message)
 	local success, msg = xpcall(mod, function (obj) traceback = debug.traceback(obj, "", 1) end)
 
 	if not success then
-		if message then message.Chat:SendMessage("Error on initializing "..filename..":\n"..(msg or "")..traceback) end
+		if message then message.chat:sendMessage("Error on initializing "..filename..":\n"..(msg or "")..traceback) end
 		return print("error", "Error on initializing "..filename..":\n"..(msg or "")..traceback)
 	end
 
@@ -232,7 +232,7 @@ function loadModules(message)
 	end
 
 	print("info", "All modules were loaded.")
-	if message then message.Chat:SendMessage("All modules were loaded.") end
+	if message then message.chat:sendMessage("All modules were loaded.") end
 end
 
 function toggleModule(module)
@@ -402,16 +402,17 @@ function resolveEvents()
 	print("Parsing event "..e)
 	
 	if e == "messageReceived" then
+		setmetatable(args[1], {__index = args[2].chat})
 		for _, command, commandArgs in string.gmatch(args[2].Body, "(!)([^\n\t%z%s!]+)[\t\n%z%s]*([^!%z]*)") do
 
 			print("Captured a command.", "command="..command, "commandArgs="..commandArgs)
 			if commandRegestry[command] then
 				if commandRegestry[command].admin then
 					--Is there a more efficient way to find role of user in chat?
-					for i = 1, args[2].Chat.MemberObjects.Count do
-						if args[2].Chat.MemberObjects:Item(i).Handle == args[2].FromHandle then
-							if ((args[2].Chat.MemberObjects:Item(i).Role <= 2) and (args[2].Chat.MemberObjects:Item(i).Role >= 0)) or (args[2].FromHandle == config.admin) then
-								processCommand(command, args[2], args[1], string.match(commandArgs, commandRegestry[command].pattern or "(.*)"))
+					for i = 1, args[2].chat.memberObjects.count do
+						if args[2].chat.memberObjects:item(i).Handle == args[2].FromHandle then
+							if ((args[2].chat.memberObjects:item(i).Role <= 2) and (args[2].chat.memberObjects:item(i).Role >= 0)) or (args[2].FromHandle == config.admin) then
+								processCommand(command, args[1], args[2], string.match(commandArgs, commandRegestry[command].pattern or "(.*)"))
 								print("info", "User "..args[2].FromHandle.." executed administrative command "..command..".")
 							else
 								print("info", "User "..args[2].FromHandle.." does not have enough privileges to execute "..command..".")
@@ -419,7 +420,7 @@ function resolveEvents()
 						end
 					end
 				else
-					processCommand(command, args[2], args[1], string.match(commandArgs, commandRegestry[command].pattern or "(.*)"))
+					processCommand(command, args[1], args[2], string.match(commandArgs, commandRegestry[command].pattern or "(.*)"))
 					print("info", "User "..args[2].FromHandle.." executed "..command..".")
 				end				
 			end

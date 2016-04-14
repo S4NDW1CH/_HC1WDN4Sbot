@@ -28,7 +28,7 @@ function onLoad()
 	bot.registerCommand{name = "cd", func = deleteCommand, admin = true}
 end
 
-function command(message, param)
+function command(chat, message, param)
 	local commandName, text = string.match(param, "^(%S+)%s*(.*)")
 	print("info", param, commandName, text)
 
@@ -42,7 +42,7 @@ function command(message, param)
 	file:close()
 end
 
-function commandList(message)
+function commandList(chat, message)
 	local s = ""
 
 	for command, _ in pairs(registeredCommands) do
@@ -52,7 +52,7 @@ function commandList(message)
 	message.chat:sendMessage(s)
 end
 
-function deleteCommand(message, command)
+function deleteCommand(chat, message, command)
 	local success = bot.unregisterCommand(command)
 	if not success then
 		message.chat.sendMessage("Could not delete "..command..".")

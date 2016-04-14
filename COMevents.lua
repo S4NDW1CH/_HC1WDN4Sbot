@@ -83,10 +83,10 @@ function skypeEvents:MessageStatus(message, status)
 	end
 	print("Event: MessageStatus status="..TChatMessageStatus[status].."("..status..") message.Body="..message.Body)
 	if ((status == 2) and (message.fromHandle ~= skype.currentUser.Handle)) or (status ~= 2) then
-		lfs.mkdir("messagelogs")
-		local f = io.open("./messagelogs/"..message.chat.blob..".json", "a")
-		f:write(json.encode({handle = message.fromHandle, name = message.fromDisplayName, timestamp = message.timestamp, body = message.body})..",")
-		f:close()
+		-- lfs.mkdir("messagelogs")
+		-- local f = io.open("./messagelogs/"..message.chat.blob..".json", "a")
+		-- f:write(json.encode({handle = message.fromHandle, name = message.fromDisplayName, timestamp = message.timestamp, body = message.body})..",")
+		-- f:close()
 		bot.queueEvent("message"..TChatMessageStatus[status], bot.chats[message.chat.blob], message)
 	end
 end

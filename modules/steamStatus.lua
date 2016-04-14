@@ -5,7 +5,7 @@ function onLoad()
 	bot.registerCommand{name = "isSteamDown", func = check}
 end
 
-function check(message, param)
+function check(chat, message, param)
 	param = string.match(param, "^(%w*)")
 
 	local APIresponse, err = https.request("https://www.steamgaug.es/api/v2")

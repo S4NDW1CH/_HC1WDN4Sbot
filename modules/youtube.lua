@@ -1,7 +1,7 @@
 https = require "ssl.https"
 require "json"
 
-function messageReceived(message)
+function messageReceived(chat, message)
 	for video in message.Body:gmatch(".*%.youtube%.com/watch.*v=([_%-%w]+)[^\t\n%s%z]*") do
 		message.Chat:SendMessage(processVideo(video))
 	end

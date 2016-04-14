@@ -30,13 +30,13 @@ local function dice(amount, sides)
 	return table.concat(result, " + ")
 end
 
-function choice(message, args)
+function choice(chat, message, args)
 	if not args then
 		return message.Chat:SendMessage("I have no choice!")
 	end
 
 	local options = {} 
-	for option in args:gmatch(",?%s*([^%,%.\n\t%z]*),?") do
+	for option in args:gmatch("[,]?([^%,%.\n\t%z]-)[,]?") do
 		table.insert(options, option)
 	end
 
@@ -51,11 +51,11 @@ function choice(message, args)
 	message.Chat:SendMessage("How about "..choice..", "..message.FromDisplayName.."?")
 end
 
-function ball(message, question)
+function ball(chat, message, question)
 	message.Chat:SendMessage(getBallResponse())
 end
 
-function roll(message, roll)
+function roll(chat, message, roll)
 	local amount, sides = string.match(roll or "1d20", "(%d*)d(%d+)")
 	message.chat:sendMessage(message.FromDisplayName.." rolled "..dice((amount and amount > 0) and amount or 1, sides or 20))
 end

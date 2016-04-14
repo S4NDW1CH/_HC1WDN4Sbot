@@ -32,9 +32,11 @@ local function getBalance(username)
 	return users[username].balance
 end
 
-function tip(message, param)
-	local usernameTo, amount = string.match(param, "^([^%s%z\t\n]+)(%d+)")
+function tip(chat, message, param)
+	local usernameTo, amount = string.match(param, "^([^%s%z\t\n]+)%s+(%d+)")
 	local usernameFrom = message.fromHandle
+
+	print("info", "'"..usernameTo.."' '".. amount.."'".."\t"..(tostring(users[usernameTo]) or ":("))
 
 	if not users[usernameFrom] then message.chat:sendMessage("You are not registered in BUTERBUCKS system. Please use !buckregister to be able to send tips."); return end
 	if not usernameTo          then message.chat:sendMessage("Please specify user to whom send tip."); return end
@@ -55,11 +57,11 @@ function tip(message, param)
 
 	add(usernameTo, amount)
 
-	message.chat:sendMessage("Successfully send "..amount.." Buterbuck(s) to "..skype.searchForUsers(usernameTo).item(0).fullName..".")
-	print("info", "Transaction: to="..usernameTo.." from="..nameFrom.." amount="..amount)
+	message.chat:sendMessage("Successfully send "..amount.." Buterbuck(s) to "..usernameTo..".")
+	print("info", "Transaction: to="..usernameTo.." from="..usernameFrom.." amount="..amount)
 end
 
-function register(message)
+function register(chat, message)
 	local user = message.fromHandle
 
 	if not users[user] then
@@ -77,7 +79,7 @@ function reloadDB(m)
 	m.chat:sendMessage("Database has been reloaded.")
 end
 
-function checkBalance(message)
+function checkBalance(chat, message)
 	message.chat:sendMessage(message.fromDisplayName.."'s account balance is "..getBalance(message.fromHandle).." buterbuck(s).")
 end
 

@@ -7,7 +7,7 @@ function onLoad()
 	bot.registerCommand{name = "wsip", func = selectGame}
 end
 
-function selectGame(message, profile)
+function selectGame(chat, message, profile)
 	profile = http.request("http://steamcommunity.com/id/"..profile.."/?xml=1")
 	assert(profile, "Could not get XML data")
 

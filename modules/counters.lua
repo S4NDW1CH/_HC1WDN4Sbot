@@ -13,6 +13,8 @@ function onLoad()
 	bot.registerCommand{name = "sc", func = setCount, admin = true, pattern="([^%s%z\t\n]+)(%d)*"}
 	bot.registerCommand{name = "listCounters", func = listCounters}
 	bot.registerCommand{name = "lc", func = listCounters}
+
+	bot.registerCommand{name = "import", func=portCounters, admin = true}
 end
 
 local function initChatEnv(chat)
@@ -25,6 +27,7 @@ local function initChatEnv(chat)
 end
 
 function newCounter(chat, message, str)
+	if not chat._cMeta then initChatEnv(chat) end
 	if not str or #str < 1 then
 		return message.chat:sendMessage("Must specify what to count.")
 	end
@@ -33,7 +36,7 @@ function newCounter(chat, message, str)
 		count = 0,
 		dailyCount = 0, 
 		cooldownTimer = 0, 
-		countdownMessages = 0,
+		cooldownMessages = 0,
 	}
 
 	message.chat:sendMessage("Counter has been created.")
@@ -44,7 +47,7 @@ function setCount(chat, message, counter, count)
 		return message.chat:sendMessage("Invalid counter specified.")
 	end
 
-	chat.counters[conter].count = count
+	chat.counters[counter].count = count
 	message.chat:sendMessage(counter.." count is now set to "..count)
 end
 
@@ -57,17 +60,28 @@ function deleteCounter(chat, message, counter)
 end
 
 function listCounters(chat, message)
+	if not chat._cMeta then return message.chat:sendMessage("No counters.") end
+
 	local list = ""
 	for name, counter in pairs(chat.counters) do
 		list = list.."\n"..name.." : "..counter.count
 	end
-	message.chat:sendMessage(list)
+	message.chat:sendMessage(#list>0 and list or "No counters.")
+end
+
+function portCounters(chat, message)
+	local f = io.open("./modules/"..name.."/counters.json")
+	local t = json.decode(f:read("*a"))
+	for str, cntr in pairs(t) do
+		newCounter(chat, message, str)
+		setCount(chat, message, str, cntr.count)
+	end
 end
 
 
 
 function messageReceived(chat, message)
-	if not chat._cMeta then initChatEnv(chat) end
+	if not chat._cMeta then return end
 
 	if chat._cMeta.lastReset <= lastMidnight then
 		chat._cMeta.lastReset = os.time()
@@ -92,7 +106,7 @@ function messageReceived(chat, message)
 
 		if  increased
 			and (os.time() > counter.cooldownTimer + 600)
-			and (counter.messageCooldown <= 0)
+			and (counter.cooldownMessages <= 0)
 			and (chat._cMeta.chatCooldownMessages <= 0)
 		then
 			--How do format code pls answer fast
@@ -101,11 +115,11 @@ function messageReceived(chat, message)
 			string.format("%1.1f", 100 * counter.dailyCount/(chat._cMeta.dailyMessageCounter == 0 and 1 or chat._cMeta.dailyMessageCounter)))
 			
 			counter.cooldown = os.time()
-			counter.messageCooldown = 11
+			counter.cooldownMessages = 11
 			chat._cMeta.chatCooldownMessages = 11
 		end
 
-		counter.messageCooldown = counter.messageCooldown - 1
+		counter.cooldownMessages = counter.cooldownMessages - 1
 	end
 	chat._cMeta.chatCooldownMessages = chat._cMeta.chatCooldownMessages - 1
 end

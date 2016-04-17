@@ -56,6 +56,8 @@ function ball(chat, message, question)
 end
 
 function roll(chat, message, roll)
-	local amount, sides = string.match(roll or "1d20", "(%d*)d(%d+)")
-	message.chat:sendMessage(message.FromDisplayName.." rolled "..dice((amount and amount > 0) and amount or 1, sides or 20))
+	local amount, sides = string.match(roll or "", "(%d+)d(%d+)")
+	amount, sides = tonumber(amount), tonumber(sides)
+	print("amount = "..(amount or "nil"), "sides = "..(sides or "nil"), "type(amount) = "..(type(amount) or "whoops"), "type(sides) = "..(type(sides) or "whoops"))
+	message.chat:sendMessage(message.FromDisplayName.." rolled "..dice((amount and type(amount) ~= "string" and amount > 0) and amount or 1, sides or 20))
 end

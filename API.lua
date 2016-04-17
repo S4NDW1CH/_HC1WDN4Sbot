@@ -104,7 +104,7 @@ local function loadModule(filename, message)
 		
 		local env = getfenv(2)
 
-		print("Loading module "..name.." within "..tostring(env).." ("..(env.name or "global")..")")
+		--print("Loading module "..name.." within "..tostring(env).." ("..(env.name or "global")..")")
 
 		if not env.package.loaded[name] then
 			
@@ -166,7 +166,7 @@ local function loadModule(filename, message)
 	--to environment of currently loading module
 	for name, lib in pairs(package.loaded) do
 		if (not (name == "_G" or name == "debug" or name == "package")) then
-			print("Adding "..name.." to loaded modules")
+			--print("Adding "..name.." to loaded modules")
 			env.package.loaded[name] = lib
 			if type(lib) ~= "boolean" then env[name] = lib end
 		end
@@ -383,8 +383,8 @@ end
 --executing command itself for no reason whatsoever. Had a lot of "fun"
 --debugging this.
 local function processCommand(command, ...)
-	print(...)
-	local message = ...
+	local args = {...}
+	local message = args[2]
 	local s, e = pcall(commandRegestry[command].func, ...)
 	if not s then
 		print("error", "Error while executing command "..command..":\n"..e) 

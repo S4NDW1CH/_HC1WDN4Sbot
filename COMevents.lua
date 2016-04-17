@@ -78,16 +78,16 @@ function skypeEvents:CallStatus(call, status)
 end
 
 function skypeEvents:MessageStatus(message, status)
-	if not bot.chats[message.chat.blob] then
-		bot.chats[message.chat.blob] = {}
+	if not bot.chats[message.chat.name] then
+		bot.chats[message.chat.name] = {}
 	end
 	print("Event: MessageStatus status="..TChatMessageStatus[status].."("..status..") message.Body="..message.Body)
 	if ((status == 2) and (message.fromHandle ~= skype.currentUser.Handle)) or (status ~= 2) then
 		-- lfs.mkdir("messagelogs")
-		-- local f = io.open("./messagelogs/"..message.chat.blob..".json", "a")
+		-- local f = io.open("./messagelogs/"..message.chat.name..".json", "a")
 		-- f:write(json.encode({handle = message.fromHandle, name = message.fromDisplayName, timestamp = message.timestamp, body = message.body})..",")
 		-- f:close()
-		bot.queueEvent("message"..TChatMessageStatus[status], bot.chats[message.chat.blob], message)
+		bot.queueEvent("message"..TChatMessageStatus[status], bot.chats[message.chat.name], message)
 	end
 end
 

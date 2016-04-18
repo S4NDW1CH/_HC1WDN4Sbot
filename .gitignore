@@ -26,7 +26,7 @@ luac.out
 *.exp
 
 # Shared objects (inc. Windows DLLs)
-#*.dll
+*.dll
 *.so
 *.so.*
 *.dylib
@@ -46,6 +46,8 @@ luac.out
 Skype4COM.dll
 Skype/
 *.json
+data/
+*.cfg
 
 # Sublime Text
 *.sublime-workspace

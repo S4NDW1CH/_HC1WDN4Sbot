@@ -3,8 +3,8 @@
 --GLOBALS: resolveTimers, resolveEvents
 
 --Where to look up modules
-package.cpath = "?.dll;lib/?.dll"
-package.path = "?.lua;lua/?.lua"
+package.cpath = package.cpath..";?.dll;lib/?.dll"
+package.path = package.path..";?.lua;lua/?.lua"
 
 --Load modules
 require "compat53.init"

@@ -1,0 +1,3 @@
+[submodule "modules"]
+	path = modules
+	url = https://github.com/S4NDW1CH/_HC1WDN4Sbot-modules.git
